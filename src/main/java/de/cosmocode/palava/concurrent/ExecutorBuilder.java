@@ -40,7 +40,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
     
     long DEFAULT_KEEP_ALIVE_TIME = 0;
     
-    QueueMode DEFAULT_QUEUE_MODE = QueueMode.BLOCKING;
+    QueueMode DEFAULT_QUEUE_MODE = QueueMode.SYNCHRONOUS;
     
     /**
      * Sets the minimum pool size.
