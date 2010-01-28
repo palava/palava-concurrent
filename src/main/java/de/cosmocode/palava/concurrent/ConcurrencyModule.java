@@ -21,18 +21,19 @@ package de.cosmocode.palava.concurrent;
 
 import com.google.inject.Module;
 
-import de.cosmocode.palava.bridge.inject.AbstractApplication;
+import de.cosmocode.palava.core.ServiceModule;
 
 /**
- * A {@link Module} for the {@link de.cosmocode.palava.core.concurrent} package.
+ * A {@link Module} for the {@link de.cosmocode.palava.concurrent} package.
  *
  * @author Willi Schoenborn
  */
-public final class ConcurrencyModule extends AbstractApplication {
+public final class ConcurrencyModule extends ServiceModule {
 
     @Override
-    protected void configureApplication() {
+    protected void configure() {
         bind(ExecutorBuilder.class).to(DefaultExecutorBuilder.class);
+        bind(ExecutorServiceFactory.class).to(DefaultExecutorServiceFactory.class);
         serve(ThreadProvider.class).with(DefaultThreadProvider.class);
     }
 
