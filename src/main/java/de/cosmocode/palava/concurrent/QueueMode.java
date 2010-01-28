@@ -19,10 +19,7 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.*;
 
 import de.cosmocode.patterns.Factory;
 
@@ -37,7 +34,7 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         
         @Override
         public BlockingQueue<Runnable> create() {
-            return new LinkedBlockingDeque<Runnable>();
+            return new LinkedBlockingQueue<Runnable>();
         }
         
     },

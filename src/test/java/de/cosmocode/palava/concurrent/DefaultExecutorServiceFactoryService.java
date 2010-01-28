@@ -19,16 +19,18 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.concurrent.ExecutorService;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import de.cosmocode.palava.core.Service;
+import de.cosmocode.palava.core.Settings;
 
-public interface ExecutorServiceFactory {
+import java.util.Map;
+import java.util.Properties;
 
-    /**
-     * 
-     * @param name
-     * @throws
-     * @return the threadpool configured by its name 
-     */
-    ExecutorService getExecutorService(String name);
-    
+public class DefaultExecutorServiceFactoryService extends DefaultExecutorServiceFactory implements Service {
+
+    @Inject
+    public DefaultExecutorServiceFactoryService(@Settings Properties settings, Provider<ExecutorBuilder> provider) {
+        super(settings, provider);
+    }
 }

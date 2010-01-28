@@ -19,16 +19,17 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.concurrent.ExecutorService;
+import de.cosmocode.palava.core.RegistryModule;
+import de.cosmocode.palava.core.ServiceModule;
 
-public interface ExecutorServiceFactory {
+public class ConcurrentTestApplication extends ServiceModule {
 
-    /**
-     * 
-     * @param name
-     * @throws
-     * @return the threadpool configured by its name 
-     */
-    ExecutorService getExecutorService(String name);
-    
+    @Override
+    protected void configure() {
+        install(new RegistryModule());
+
+        bind(ThreadProvider.class).to(DefaultThreadProvider.class);
+        bind(ExecutorBuilder.class).to(DefaultExecutorBuilder.class);
+		serve(DefaultExecutorServiceFactoryService.class);
+    }
 }
