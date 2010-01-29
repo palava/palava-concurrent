@@ -29,7 +29,19 @@ import java.util.regex.Pattern;
  */
 public interface ExecutorServiceFactory {
     
-    Pattern CONFIG_PATTERN = Pattern.compile("^executors.named.([^\\.]+)+.([^\\.])+ ");
+    String MIN_SIZE = "minSize";
+    
+    String MAX_SIZE = "maxSize";
+    
+    String KEEP_ALIVE_TIME = "keepAliveTime";
+    
+    String KEEP_ALIVE_TIME_UNIT = "keepAliveTimeUnit";
+    
+    String QUEUE = "queue";
+    
+    String QUEUE_MAX = "queueMax";
+    
+    Pattern CONFIG_PATTERN = Pattern.compile("^executors\\.named\\.([^\\.]+)\\.([^\\.]+)");
 
     /**
      * 

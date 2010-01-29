@@ -21,21 +21,21 @@ package de.cosmocode.palava.concurrent;
 
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Multimap;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -66,7 +66,7 @@ import de.cosmocode.palava.core.Settings;
  *     keep alive tells the system to stop idling threads after this time
  *   </li>
  *   <li>
- *     <b>KeepAliveTimeUnit</b>:
+ *     <b>keepAliveTimeUnit</b>:
  *     (TimeUnit) required by keepAlive
  *   </li>
  *   <li>
@@ -92,113 +92,79 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
     
     private static final Logger LOG = LoggerFactory.getLogger(DefaultExecutorServiceFactory.class);
     
-    private static final String CONFIG_EXECUTORS = "executors.named.";
-
     private final Map<String, ExecutorService> configuredExecutors = Maps.newHashMap();
 
     private final Provider<ExecutorServiceBuilder> provider;
     
     @Inject
-    public DefaultExecutorServiceFactory(
-        @Settings Properties settings,
-        Provider<ExecutorServiceBuilder> provider) {
-
+    public DefaultExecutorServiceFactory(@Settings Properties settings, Provider<ExecutorServiceBuilder> provider) {
         Preconditions.checkNotNull(settings, "Settings");
         this.provider = Preconditions.checkNotNull(provider, "Provider");
 
-        // parse the configurations for executor configurations
-        
-        final Map<String, Map<String, String>> conf = Maps.newHashMap();
-        for (Map.Entry<Object, Object> entry : settings.entrySet()) {
-            // filter settings for configurations of this threadpool
-            if (((String) entry.getKey()).startsWith(CONFIG_EXECUTORS)) {
-
-                final String subkey = ((String) entry.getKey()).substring(CONFIG_EXECUTORS.length());
-                final String name = subkey.substring(0, subkey.indexOf('.'));
-                final String key = subkey.substring(name.length() + 1);
-
-                LOG.trace("<<" + name + ">> " + key + ": " + entry.getValue());
-
-                Map<String, String> c = conf.get(name);
-                if (c == null) {
-                    c = Maps.newHashMap();
-                    conf.put(name, c);
-                }
-                c.put(key, (String) entry.getValue());
+        final Set<Object> propertyNames = Sets.filter(settings.keySet(), new Predicate<Object>() {
+            
+            @Override
+            public boolean apply(Object input) {
+                return input == null ? false : CONFIG_PATTERN.matcher(input.toString()).matches();
             }
+            
+        });
+        
+        final Map<String, Map<String, String>> configs = Maps.newHashMap();
+        
+        for (Object propertyName : propertyNames) {
+            final Matcher matcher = CONFIG_PATTERN.matcher(propertyName.toString());
+            final boolean matches = matcher.matches();
+            assert matches : "Key should match";
+            final String name = matcher.group(1);
+            if (!configs.containsKey(name)) {
+                final Map<String, String> map = Maps.newHashMap();
+                configs.put(name, map);
+            }
+            final String key = matcher.group(2);
+            final String value = settings.getProperty(propertyName.toString());
+            configs.get(name).put(key, value);
+            LOG.trace("Executor configuration: {}.{} = {}", new Object[] {
+                name, key, value
+            });
         }
-
-        LOG.debug("{}", conf);
-
-        // create the executors
-        for (Map.Entry<String, Map<String, String>> executorsConf : conf.entrySet()) {
-            final String executorName = executorsConf.getKey();
-            final Map<String, String> executorConf = executorsConf.getValue();
-
-            LOG.debug("creating ExecutorService \"" + executorName + "\"");
-
+        
+        LOG.debug("{}", configs);
+        
+        for (String name : configs.keySet()) {
             final ExecutorServiceBuilder builder = provider.get();
-
-            // set the configuration settings
-            for (Map.Entry<String, String> eC : executorConf.entrySet()) {
-
-                if ("minSize".equals(eC.getKey())) {
-                    builder.minSize(Integer.parseInt(eC.getValue()));
-                    continue;
-                }
-
-                if ("maxSize".equals(eC.getKey())) {
-                    builder.maxSize(Integer.parseInt(eC.getValue()));
-                    continue;
-                }
-
-                if ("keepAlive".equals(eC.getKey()) || "keepAliveTimeUnit".equals(eC.getKey())) {
-                    final String keepAlive = executorConf.get("keepAlive");
-                    final String keepAliveTimeUnit = executorConf.get("keepAliveTimeUnit");
+            final Map<String, String> config = configs.get(name);
+            LOG.debug("Creating executor service {}", name);
+            for (Entry<String, String> entry : config.entrySet()) {
+                final String key = entry.getKey();
+                final String value = entry.getValue();
+                if (MIN_SIZE.equals(key)) {
+                    builder.minSize(Integer.parseInt(value));
+                } else if (MAX_SIZE.equals(key)) {
+                    builder.maxSize(Integer.parseInt(value));
+                } else if (KEEP_ALIVE_TIME.equals(key) || KEEP_ALIVE_TIME_UNIT.equals(key)) {
+                    final String keepAlive = config.get(KEEP_ALIVE_TIME);
+                    final String keepAliveTimeUnit = config.get(KEEP_ALIVE_TIME_UNIT);
                     if (keepAlive == null) {
-                        throw new IllegalArgumentException("keepAliveTimeUnit without keepAlive given");
+                        throw new IllegalArgumentException("keepAliveTime not set");
                     }
                     if (keepAliveTimeUnit == null) {
-                        throw new IllegalArgumentException("keepAlive without keepAliveTimeUnit given");
+                        throw new IllegalArgumentException("keepAliveTimeUnit not set");
                     }
                     builder.keepAlive(Long.parseLong(keepAlive), TimeUnit.valueOf(keepAliveTimeUnit));
-                    continue;
-                }
-
-                if ("queue".equals(eC.getKey())) {
+                } else if (QUEUE.equals(key)) {
+                    final QueueMode mode = QueueMode.valueOf(value);
+                    final String queueMax = config.get(QUEUE_MAX);
                     final BlockingQueue<Runnable> queue;
-                    
-                    if ("synchronized".equals(eC.getValue())) {
-                        queue = new SynchronousQueue<Runnable>();
-                    } else if ("static".equals(eC.getValue())) {
-                        final String queueMax = executorConf.get("queueMax");
-                        if (queueMax != null) {
-                            queue = new ArrayBlockingQueue<Runnable>(Integer.parseInt(queueMax));
-                        } else {
-                            throw new IllegalArgumentException(
-                                "static queue configured but no queueMax for executor \"" + executorName + "\"");
-                        }
-                    } else if ("dynamic".equals(eC.getValue())) {
-                        final String queueMax = executorConf.get("queueMax");
-                        if (queueMax != null) {
-                            queue = new LinkedBlockingQueue<Runnable>(Integer.parseInt(queueMax));
-                        } else {
-                            queue = new LinkedBlockingQueue<Runnable>();
-                        }
+                    if (queueMax == null) {
+                        queue = mode.create();
                     } else {
-                        throw new IllegalArgumentException(
-                            "unknown queue for executor \"" + executorName + "\" configured");
+                        queue = mode.create(Integer.parseInt(queueMax));
                     }
                     builder.queue(queue);
-                    continue;
                 }
-
-                throw new IllegalArgumentException(
-                    "unknown configuration \"" + eC.getKey() + "\" for executor \"" + executorName + "\" given");
             }
-
-            // generate the threadpool
-            configuredExecutors.put(executorName, builder.build());
+            configuredExecutors.put(name, builder.build());
         }
     }
     
