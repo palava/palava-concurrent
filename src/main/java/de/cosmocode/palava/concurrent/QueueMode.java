@@ -19,7 +19,11 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 import de.cosmocode.patterns.Factory;
 
@@ -37,6 +41,25 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
             return new LinkedBlockingQueue<Runnable>();
         }
         
+        @Override
+        public BlockingQueue<Runnable> create(int capacity) {
+            return new LinkedBlockingQueue<Runnable>(capacity);
+        }
+        
+    },
+    
+    STATIC {
+        
+        @Override
+        public BlockingQueue<Runnable> create() {
+            throw new UnsupportedOperationException(name() + " needs a capacity");
+        }
+        
+        @Override
+        public BlockingQueue<Runnable> create(int capacity) {
+            return new ArrayBlockingQueue<Runnable>(capacity);
+        }
+        
     },
     
     SYNCHRONOUS {
@@ -44,6 +67,11 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         @Override
         public BlockingQueue<Runnable> create() {
             return new SynchronousQueue<Runnable>();
+        }
+        
+        @Override
+        public BlockingQueue<Runnable> create(int capacity) {
+            throw new UnsupportedOperationException(name() + " is not applicable with a capacity");
         }
         
     },
@@ -55,9 +83,26 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
             return new PriorityBlockingQueue<Runnable>();
         }
         
+        @Override
+        public BlockingQueue<Runnable> create(int capacity) {
+            // TODO initialCapacity = capacity?
+            return new PriorityBlockingQueue<Runnable>(capacity);
+        }
+        
     };
     
     @Override
     public abstract BlockingQueue<Runnable> create();
+    
+    /**
+     * Createsa new {@link BlockingQueue} using the semantics of
+     * this mode and limits the capacity to the specified value. 
+     * 
+     * @param capacity the maximum size
+     * @return a new {@link BlockingQueue}
+     * @throws UnsupportedOperationException if this mode does now allow
+     *         the capacity setting
+     */
+    public abstract BlockingQueue<Runnable> create(int capacity);
     
 }
