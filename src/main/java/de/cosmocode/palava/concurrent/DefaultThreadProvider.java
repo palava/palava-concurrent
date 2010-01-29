@@ -99,7 +99,9 @@ final class DefaultThreadProvider implements ThreadProvider {
         public Thread newThread(Runnable runnable) {
             final Thread thread = factory == null ? new Thread(runnable) : factory.newThread(runnable);
             threads.add(thread);
-            log.debug("New thread {}, {} thread(s) currently in use", thread, threadSize);
+            if (log.isTraceEnabled()) {
+                log.trace("New thread {}, {} thread(s) currently in use", thread, threadSize);
+            }
             return thread;
         }
         
