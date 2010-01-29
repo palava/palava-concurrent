@@ -85,8 +85,7 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         
         @Override
         public BlockingQueue<Runnable> create(int capacity) {
-            // TODO initialCapacity = capacity?
-            return new PriorityBlockingQueue<Runnable>(capacity);
+            throw new UnsupportedOperationException(name() + " is not applicable with a capacity");
         }
         
     };
