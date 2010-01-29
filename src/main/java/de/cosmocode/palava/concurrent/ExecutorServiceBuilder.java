@@ -32,7 +32,7 @@ import de.cosmocode.patterns.Builder;
  *
  * @author Willi Schoenborn
  */
-public interface ExecutorBuilder extends Builder<ExecutorService> {
+public interface ExecutorServiceBuilder extends Builder<ExecutorService> {
     
     int DEFAULT_MIN_POOL_SIZE = 0;
     
@@ -49,7 +49,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
      * @return this
      * @throws IllegalArgumentException if minPoolSize is less than zero or greater than maxPoolSize
      */
-    ExecutorBuilder minSize(int minPoolSize);
+    ExecutorServiceBuilder minSize(int minPoolSize);
     
     /**
      * Sets the maximum pool size.
@@ -58,7 +58,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
      * @return this
      * @throws IllegalArgumentException if maxPoolSize is less than zero or less than minPoolSize
      */
-    ExecutorBuilder maxSize(int maxPoolSize);
+    ExecutorServiceBuilder maxSize(int maxPoolSize);
     
     /**
      * Sets the keep alive time and the corresponding time unit.
@@ -69,7 +69,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
      * @throws IllegalArgumentException if time is less than zero
      * @throws NullPointerException if unit is null
      */
-    ExecutorBuilder keepAlive(long time, TimeUnit unit);
+    ExecutorServiceBuilder keepAlive(long time, TimeUnit unit);
     
     /**
      * Sets the work queue.
@@ -78,7 +78,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
      * @return this
      * @throws NullPointerException if queue is null
      */
-    ExecutorBuilder queue(BlockingQueue<Runnable> queue);
+    ExecutorServiceBuilder queue(BlockingQueue<Runnable> queue);
     
     /**
      * Sets the work queue by using {@link QueueMode#create()}.
@@ -87,7 +87,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
      * @return this
      * @throws NullPointerException if mode is null
      */
-    ExecutorBuilder queue(QueueMode mode);
+    ExecutorServiceBuilder queue(QueueMode mode);
     
     /**
      * Sets the {@linkplain ThreadFactory thread factory} that will be
@@ -97,7 +97,7 @@ public interface ExecutorBuilder extends Builder<ExecutorService> {
      * @return this
      * @throws NullPointerException if factory is null
      */
-    ExecutorBuilder threadFactory(ThreadFactory factory);
+    ExecutorServiceBuilder threadFactory(ThreadFactory factory);
     
     /**
      * Builds a ScheduledExecutorService.

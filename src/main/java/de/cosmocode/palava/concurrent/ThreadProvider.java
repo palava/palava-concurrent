@@ -21,8 +21,6 @@ package de.cosmocode.palava.concurrent;
 
 import java.util.concurrent.ThreadFactory;
 
-import de.cosmocode.palava.core.Service;
-
 /**
  * {@link ThreadProvider} provides a way to create {@link Thread}s
  * and {@link ThreadFactory}s while simultaneously keeping track
@@ -30,7 +28,7 @@ import de.cosmocode.palava.core.Service;
  *
  * @author Willi Schoenborn
  */
-public interface ThreadProvider extends Service, ThreadFactory {
+public interface ThreadProvider extends ThreadFactory {
 
     /**
      * Creates a new {@link ThreadFactory} which

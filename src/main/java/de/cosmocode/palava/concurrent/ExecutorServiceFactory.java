@@ -20,8 +20,16 @@
 package de.cosmocode.palava.concurrent;
 
 import java.util.concurrent.ExecutorService;
+import java.util.regex.Pattern;
 
+/**
+ * 
+ *
+ * @author Willi Schoenborn
+ */
 public interface ExecutorServiceFactory {
+    
+    Pattern CONFIG_PATTERN = Pattern.compile("^executors.named.([^\\.]+)+.([^\\.])+ ");
 
     /**
      * 
@@ -30,5 +38,12 @@ public interface ExecutorServiceFactory {
      * @return the threadpool configured by its name 
      */
     ExecutorService getExecutorService(String name);
+    
+    /**
+     * 
+     * @param name
+     * @return
+     */
+    ExecutorServiceBuilder buildExecutorService(String name);
     
 }

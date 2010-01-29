@@ -19,22 +19,21 @@
 
 package de.cosmocode.palava.concurrent;
 
+import com.google.inject.Binder;
 import com.google.inject.Module;
-
-import de.cosmocode.palava.core.ServiceModule;
 
 /**
  * A {@link Module} for the {@link de.cosmocode.palava.concurrent} package.
  *
  * @author Willi Schoenborn
  */
-public final class ConcurrencyModule extends ServiceModule {
+public final class ConcurrencyModule implements Module {
 
     @Override
-    protected void configure() {
-        bind(ExecutorBuilder.class).to(DefaultExecutorBuilder.class);
-        bind(ExecutorServiceFactory.class).to(DefaultExecutorServiceFactory.class);
-        serve(ThreadProvider.class).with(DefaultThreadProvider.class);
+    public void configure(Binder binder) {
+        binder.bind(ExecutorServiceBuilder.class).to(DefaultExecutorServiceBuilder.class);
+        binder.bind(ExecutorServiceFactory.class).to(DefaultExecutorServiceFactory.class);
+        binder.bind(ThreadProvider.class).to(DefaultThreadProvider.class);
     }
 
 }

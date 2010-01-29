@@ -30,7 +30,7 @@ import java.util.Properties;
 public class DefaultExecutorServiceFactoryService extends DefaultExecutorServiceFactory implements Service {
 
     @Inject
-    public DefaultExecutorServiceFactoryService(@Settings Properties settings, Provider<ExecutorBuilder> provider) {
+    public DefaultExecutorServiceFactoryService(@Settings Properties settings, Provider<ExecutorServiceBuilder> provider) {
         super(settings, provider);
     }
 }

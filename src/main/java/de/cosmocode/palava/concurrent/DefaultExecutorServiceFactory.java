@@ -25,13 +25,17 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -48,34 +52,62 @@ import de.cosmocode.palava.core.Settings;
  * with <name> being the ExecutorService name, <key> and <value> the
  * executors configuration. The following configurations are possible:
  * <ul>
- *   <li><b>minSize</b>: (int) core pool size</li>
- *   <li><b>maxSize</b>: (int) maximum count of threads to spawn</li>
- *   <li><b>keepAlive</b>: (long) if there are more threads than minSize configures, keep alive tells the system to stop idling threads after this time</li>
- *   <li><b>KeepAliveTimeUnit</b>: (TimeUnit) required by keepAlive</li>
- *   <li><b>queue</b>: <b>synchronized</b> fastest handling, no queue | <b>static</b> fastest queuing, requires queueMax | <b>dynamic</b> most flexible queuing, can be changed at runtime, can use queueMax</li>
- *   <li><b>queueMax</b>: (int) maximum queue size (see static|dynamic)</li>
+ *   <li>
+ *     <b>minSize</b>:
+ *     (int) core pool size
+ *   </li>
+ *   <li>
+ *     <b>maxSize</b>:
+ *     (int) maximum count of threads to spawn
+ *   </li>
+ *   <li>
+ *     <b>keepAlive</b>:
+ *     (long) if there are more threads than minSize configures,
+ *     keep alive tells the system to stop idling threads after this time
+ *   </li>
+ *   <li>
+ *     <b>KeepAliveTimeUnit</b>:
+ *     (TimeUnit) required by keepAlive
+ *   </li>
+ *   <li>
+ *     <b>queue</b>:
+ *     <ul>
+ *       <li><b>{@link QueueMode#SYNCHRONOUS}</b> fastest handling, no queue</li>
+ *       <li><b>{@link QueueMode#PRIORITY}</b> priority queing, requires {@link Comparable}</li>
+ *       <li><b>{@link QueueMode#STATIC}</b> fastest queuing, requires queueMax</li>
+ *       <li><b>{@link QueueMode#BLOCKING}</b> most flexible queuing, can be changed at runtime, can use queueMax</li>
+ *     </ul>
+ *   </li>
+ *   <li>
+ *     <b>queueMax</b>:
+ *     (int) maximum queue size (see {@link QueueMode#STATIC} | {@link QueueMode#BLOCKING})
+ *   </li>
  * </ul>
  *
  * @author Tobias Sarnowski
+ * @author Willi Schoenborn
  */
 @Singleton
 class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
+    
     private static final Logger LOG = LoggerFactory.getLogger(DefaultExecutorServiceFactory.class);
-
+    
     private static final String CONFIG_EXECUTORS = "executors.named.";
-
 
     private final Map<String, ExecutorService> configuredExecutors = Maps.newHashMap();
 
+    private final Provider<ExecutorServiceBuilder> provider;
+    
     @Inject
     public DefaultExecutorServiceFactory(
         @Settings Properties settings,
-        Provider<ExecutorBuilder> provider) {
+        Provider<ExecutorServiceBuilder> provider) {
 
         Preconditions.checkNotNull(settings, "Settings");
-        Preconditions.checkNotNull(provider, "Provider");
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
 
         // parse the configurations for executor configurations
+        
         final Map<String, Map<String, String>> conf = Maps.newHashMap();
         for (Map.Entry<Object, Object> entry : settings.entrySet()) {
             // filter settings for configurations of this threadpool
@@ -105,7 +137,7 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
 
             LOG.debug("creating ExecutorService \"" + executorName + "\"");
 
-            final ExecutorBuilder builder = provider.get();
+            final ExecutorServiceBuilder builder = provider.get();
 
             // set the configuration settings
             for (Map.Entry<String, String> eC : executorConf.entrySet()) {
@@ -172,12 +204,125 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
     
     @Override
     public ExecutorService getExecutorService(String name) {
-        // check if the executor is configured
+        Preconditions.checkNotNull(name, "Name");
         final ExecutorService service = configuredExecutors.get(name);
-        if (service != null) {
+        if (service == null) {
+            throw new IllegalArgumentException("requested executor '" + name + "' not configured"); 
+        } else {
             return service;
         }
-        throw new IllegalArgumentException("requested executor \"" + name + "\" not configured"); 
+    }
+    
+    @Override
+    public ExecutorServiceBuilder buildExecutorService(String name) {
+        Preconditions.checkNotNull(name, "Name");
+        final ExecutorService cached = configuredExecutors.get(name);
+        if (cached == null) {
+            final ExecutorServiceBuilder builder = provider.get();
+            return new InterceptingExecutorServiceBuilder(name, builder);
+        } else {
+            throw new IllegalArgumentException(
+                String.format("There is already a configured executor service with the name '%s'", name)
+            );
+        }
+    }
+    
+    /**
+     * An {@link ExecutorServiceBuilder} which intercepts the build-methods and
+     * keeps a reference to the constructed executor service.
+     * 
+     * <p>
+     *   Multiple calls to the build method will fail.
+     * </p>
+     *
+     * @author Willi Schoenborn
+     */
+    private final class InterceptingExecutorServiceBuilder extends ForwardingExecutorServiceBuilder {
+        
+        private static final String ERROR = "An executor service with the name '%s' has been configured concurrently";
+        
+        private final String name;
+        
+        private final ExecutorServiceBuilder builder;
+        
+        public InterceptingExecutorServiceBuilder(String name, ExecutorServiceBuilder builder) {
+            this.name = Preconditions.checkNotNull(name, "Name");
+            this.builder = Preconditions.checkNotNull(builder, "Builder");
+        }
+
+        @Override
+        protected ExecutorServiceBuilder delegate() {
+            return builder;
+        }
+        
+        @Override
+        public ExecutorService build() {
+            final ExecutorService cached = configuredExecutors.get(name);
+            if (cached == null) {
+                final ExecutorService service = builder.build();
+                configuredExecutors.put(name, service);
+                return service;
+            } else {
+                return cached;
+            }
+        }
+
+        @Override
+        public ScheduledExecutorService buildScheduled() {
+            final ExecutorService cached = configuredExecutors.get(name);
+            if (cached == null) {
+                final ScheduledExecutorService service = builder.buildScheduled();
+                configuredExecutors.put(name, service);
+                return service;
+            } else if (cached instanceof ScheduledExecutorService) {
+                return ScheduledExecutorService.class.cast(cached);
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "%s is not a %s", cached, ScheduledExecutorService.class.getName()
+                ));
+            }
+        }
+        
+        private void checkConcurrentCreation() {
+            Preconditions.checkState(!configuredExecutors.containsKey(name), ERROR, name);
+        }
+
+        @Override
+        public ExecutorServiceBuilder keepAlive(long time, TimeUnit unit) {
+            checkConcurrentCreation();
+            return super.keepAlive(time, unit);
+        }
+
+        @Override
+        public ExecutorServiceBuilder maxSize(int maxPoolSize) {
+            checkConcurrentCreation();
+            return super.maxSize(maxPoolSize);
+        }
+
+        @Override
+        public ExecutorServiceBuilder minSize(int minPoolSize) {
+            checkConcurrentCreation();
+            return super.minSize(minPoolSize);
+        }
+
+        @Override
+        public ExecutorServiceBuilder queue(BlockingQueue<Runnable> queue) {
+            checkConcurrentCreation();
+            return super.queue(queue);
+        }
+
+        @Override
+        public ExecutorServiceBuilder queue(QueueMode mode) {
+            checkConcurrentCreation();
+            return super.queue(mode);
+        }
+
+        @Override
+        public ExecutorServiceBuilder threadFactory(ThreadFactory factory) {
+            checkConcurrentCreation();
+            return super.threadFactory(factory);
+        }
+        
     }
 
 }

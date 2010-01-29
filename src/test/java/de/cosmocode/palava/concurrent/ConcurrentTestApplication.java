@@ -29,7 +29,7 @@ public class ConcurrentTestApplication extends ServiceModule {
         install(new RegistryModule());
 
         bind(ThreadProvider.class).to(DefaultThreadProvider.class);
-        bind(ExecutorBuilder.class).to(DefaultExecutorBuilder.class);
+        bind(ExecutorServiceBuilder.class).to(DefaultExecutorServiceBuilder.class);
 		serve(DefaultExecutorServiceFactoryService.class);
     }
 }
