@@ -19,12 +19,15 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
-import de.cosmocode.palava.core.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +67,6 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
 
     private final Map<String, ExecutorService> configuredExecutors = Maps.newHashMap();
 
-
     @Inject
     public DefaultExecutorServiceFactory(
         @Settings Properties settings,
@@ -74,39 +76,39 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
         Preconditions.checkNotNull(provider, "Provider");
 
         // parse the configurations for executor configurations
-        Map<String,Map<String,String>> conf = Maps.newHashMap();
-        for (Map.Entry<Object,Object> entry: settings.entrySet()) {
+        final Map<String, Map<String, String>> conf = Maps.newHashMap();
+        for (Map.Entry<Object, Object> entry : settings.entrySet()) {
             // filter settings for configurations of this threadpool
-            if (((String)entry.getKey()).startsWith(CONFIG_EXECUTORS)) {
+            if (((String) entry.getKey()).startsWith(CONFIG_EXECUTORS)) {
 
-                String subkey = ((String)entry.getKey()).substring(CONFIG_EXECUTORS.length());
-                String name = subkey.substring(0, subkey.indexOf('.'));
-                String key = subkey.substring(name.length() + 1);
+                final String subkey = ((String) entry.getKey()).substring(CONFIG_EXECUTORS.length());
+                final String name = subkey.substring(0, subkey.indexOf('.'));
+                final String key = subkey.substring(name.length() + 1);
 
                 LOG.trace("<<" + name + ">> " + key + ": " + entry.getValue());
 
-                Map<String,String> c = conf.get(name);
+                Map<String, String> c = conf.get(name);
                 if (c == null) {
-                     c = Maps.newHashMap();
+                    c = Maps.newHashMap();
                     conf.put(name, c);
                 }
-                c.put(key, ((String)entry.getValue()));
+                c.put(key, (String) entry.getValue());
             }
         }
 
         LOG.debug("{}", conf);
 
         // create the executors
-        for (Map.Entry<String,Map<String,String>> executorsConf: conf.entrySet()) {
-            String executorName = executorsConf.getKey();
-            Map<String,String> executorConf = executorsConf.getValue();
+        for (Map.Entry<String, Map<String, String>> executorsConf : conf.entrySet()) {
+            final String executorName = executorsConf.getKey();
+            final Map<String, String> executorConf = executorsConf.getValue();
 
             LOG.debug("creating ExecutorService \"" + executorName + "\"");
 
-            ExecutorBuilder builder = provider.get();
+            final ExecutorBuilder builder = provider.get();
 
             // set the configuration settings
-            for (Map.Entry<String,String> eC: executorConf.entrySet()) {
+            for (Map.Entry<String, String> eC : executorConf.entrySet()) {
 
                 if ("minSize".equals(eC.getKey())) {
                     builder.minSize(Integer.parseInt(eC.getValue()));
@@ -119,8 +121,8 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
                 }
 
                 if ("keepAlive".equals(eC.getKey()) || "keepAliveTimeUnit".equals(eC.getKey())) {
-                    String keepAlive = executorConf.get("keepAlive");
-                    String keepAliveTimeUnit = executorConf.get("keepAliveTimeUnit");
+                    final String keepAlive = executorConf.get("keepAlive");
+                    final String keepAliveTimeUnit = executorConf.get("keepAliveTimeUnit");
                     if (keepAlive == null) {
                         throw new IllegalArgumentException("keepAliveTimeUnit without keepAlive given");
                     }
@@ -136,32 +138,31 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
                     
                     if ("synchronized".equals(eC.getValue())) {
                         queue = new SynchronousQueue<Runnable>();
-                    } else
-
-                    if ("static".equals(eC.getValue())) {
-                        String queueMax = executorConf.get("queueMax");
+                    } else if ("static".equals(eC.getValue())) {
+                        final String queueMax = executorConf.get("queueMax");
                         if (queueMax != null) {
-                            queue = new ArrayBlockingQueue(Integer.parseInt(queueMax));
+                            queue = new ArrayBlockingQueue<Runnable>(Integer.parseInt(queueMax));
                         } else {
-                            throw new IllegalArgumentException("static queue configured but no queueMax for executor \"" + executorName + "\"");
+                            throw new IllegalArgumentException(
+                                "static queue configured but no queueMax for executor \"" + executorName + "\"");
                         }
-                    } else
-
-                    if ("dynamic".equals(eC.getValue())) {
-                        String queueMax = executorConf.get("queueMax");
+                    } else if ("dynamic".equals(eC.getValue())) {
+                        final String queueMax = executorConf.get("queueMax");
                         if (queueMax != null) {
-                            queue = new LinkedBlockingQueue(Integer.parseInt(queueMax));
+                            queue = new LinkedBlockingQueue<Runnable>(Integer.parseInt(queueMax));
                         } else {
-                            queue = new LinkedBlockingQueue();
+                            queue = new LinkedBlockingQueue<Runnable>();
                         }
                     } else {
-                        throw new IllegalArgumentException("unknown queue for executor \"" + executorName + "\" configured");
+                        throw new IllegalArgumentException(
+                            "unknown queue for executor \"" + executorName + "\" configured");
                     }
                     builder.queue(queue);
                     continue;
                 }
 
-                throw new IllegalArgumentException("unknown configuration \"" + eC.getKey() + "\" for executor \"" + executorName + "\" given");
+                throw new IllegalArgumentException(
+                    "unknown configuration \"" + eC.getKey() + "\" for executor \"" + executorName + "\" given");
             }
 
             // generate the threadpool
@@ -172,7 +173,7 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
     @Override
     public ExecutorService getExecutorService(String name) {
         // check if the executor is configured
-        ExecutorService service = configuredExecutors.get(name);
+        final ExecutorService service = configuredExecutors.get(name);
         if (service != null) {
             return service;
         }
