@@ -19,43 +19,16 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.concurrent.ExecutorService;
-import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * 
- *
- * @author Willi Schoenborn
- */
-public interface ExecutorServiceFactory {
+public class ExecutorsConfig {
+    private ExecutorsConfig() {}
 
-    String MIN_SIZE = "minSize";
+    public static final String Prefix = "executors.";
 
-    String MAX_SIZE = "maxSize";
+    public static ExecutorConfig Named(String name) {
+        return new ExecutorConfig(name);
+    }
 
-    String KEEP_ALIVE_TIME = "keepAliveTime";
-
-    String KEEP_ALIVE_TIME_UNIT = "keepAliveTimeUnit";
-
-    String QUEUE = "queue";
-
-    String QUEUE_MAX = "queueMax";
-    
-    Pattern CONFIG_PATTERN = Pattern.compile("^executors\\.named\\.([^\\.]+)\\.([^\\.]+)");
-
-    /**
-     * 
-     * @param name
-     * @throws
-     * @return the threadpool configured by its name 
-     */
-    ExecutorService getExecutorService(String name);
-    
-    /**
-     * 
-     * @param name
-     * @return
-     */
-    ExecutorServiceBuilder buildExecutorService(String name);
-    
 }

@@ -19,6 +19,7 @@
 
 package de.cosmocode.palava.concurrent;
 
+import de.cosmocode.palava.core.CoreConfig;
 import de.cosmocode.palava.core.Framework;
 import de.cosmocode.palava.core.Palava;
 import org.junit.Test;
@@ -29,7 +30,7 @@ public class ExecutorServiceFactoryParsingTest {
 
     private Properties defaultConfiguration() {
         Properties prop = new Properties();
-        prop.put("core.main.module", ConcurrentTestApplication.class.getName());
+        prop.put(CoreConfig.Application, ConcurrentTestApplication.class.getName());
         return prop;
     }
 
@@ -62,7 +63,7 @@ public class ExecutorServiceFactoryParsingTest {
     public void singleConfigurationSimple() {
         Properties conf = defaultConfiguration();
 
-        conf.put("executors.named.blablub.queue", "SYNCHRONOUS");
+        conf.put(ExecutorsConfig.Named("blablub").queue(), "SYNCHRONOUS");
 
         Framework f = startFramework(conf);
         stopFramework(f);

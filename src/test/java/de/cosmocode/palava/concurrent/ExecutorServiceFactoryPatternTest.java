@@ -41,12 +41,12 @@ public final class ExecutorServiceFactoryPatternTest {
      */
     @Test
     public void valid() {
-        Asserts.assertMatches(unit, "executors.named.salesforce-sync.minSize");
-        Asserts.assertMatches(unit, "executors.named.nio-workers.maxSize");
-        Asserts.assertMatches(unit, "executors.named.publishing.keepAlive");
-        Asserts.assertMatches(unit, "executors.named.background-tasks.keepAliveTimeUnit");
-        Asserts.assertMatches(unit, "executors.named.custom-single-thread.queue");
-        Asserts.assertMatches(unit, "executors.named.cleanup-threads.queueMax");
+        Asserts.assertMatches(unit, ExecutorsConfig.Named("salesforce-sync").minSize());
+        Asserts.assertMatches(unit, ExecutorsConfig.Named("nio-worker").maxSize());
+        Asserts.assertMatches(unit, ExecutorsConfig.Named("publishing").keepAliveTime());
+        Asserts.assertMatches(unit, ExecutorsConfig.Named("background-tasks").keepAliveTimeUnit());
+        Asserts.assertMatches(unit, ExecutorsConfig.Named("custom-single-thread").queue());
+        Asserts.assertMatches(unit, ExecutorsConfig.Named("cleanup-threads").queueMax());
     }
     
     /**
@@ -55,7 +55,7 @@ public final class ExecutorServiceFactoryPatternTest {
     @Test
     public void invalid() {
         Asserts.assertDoesNotMatch(unit, "executor.named.salesforce-sync.minSize");
-        Asserts.assertDoesNotMatch(unit, "core.main.module = de.cosmocode.palava.core.EmptyModule");
+        Asserts.assertDoesNotMatch(unit, "core.application = de.cosmocode.palava.core.EmptyModule");
         Asserts.assertDoesNotMatch(unit, "executors.my-named-threadpool.minSize");
         Asserts.assertDoesNotMatch(unit, "mail.template-root");
         Asserts.assertDoesNotMatch(unit, "socket.port");
@@ -66,7 +66,7 @@ public final class ExecutorServiceFactoryPatternTest {
      */
     @Test
     public void firstGroup1() {
-        final Matcher matcher = unit.matcher("executors.named.salesforce-sync.minSize");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("salesforce-sync").minSize());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("salesforce-sync", matcher.group(1));
     }
@@ -75,7 +75,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the first group provided by the matcher.
      */
     public void firstGroup2() {
-        final Matcher matcher = unit.matcher("executors.named.nio-workers.maxSize");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("nio-worker").maxSize());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("nio-workers", matcher.group(1));
     }
@@ -84,7 +84,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the first group provided by the matcher.
      */
     public void firstGroup3() {
-        final Matcher matcher = unit.matcher("executors.named.publishing.keepAlive");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("publishing").keepAliveTime());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("publishing", matcher.group(1));
     }
@@ -93,7 +93,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the first group provided by the matcher.
      */
     public void firstGroup4() {
-        final Matcher matcher = unit.matcher("executors.named.background-tasks.keepAliveTimeUnit");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("background-tasks").keepAliveTimeUnit());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("background-tasks", matcher.group(1));
     }
@@ -102,7 +102,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the first group provided by the matcher.
      */
     public void firstGroup5() {
-        final Matcher matcher = unit.matcher("executors.named.custom-single-thread.queue");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("custom-single-thread").queue());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("custom-single-thread", matcher.group(1));
     }
@@ -111,7 +111,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the first group provided by the matcher.
      */
     public void firstGroup6() {
-        final Matcher matcher = unit.matcher("executors.named.cleanup-threads.queueMax");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("cleanup-threads").queueMax());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("cleanup-threads", matcher.group(1));
     }
@@ -121,7 +121,7 @@ public final class ExecutorServiceFactoryPatternTest {
      */
     @Test
     public void secondGroup1() {
-        final Matcher matcher = unit.matcher("executors.named.salesforce-sync.minSize");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("salesforce-sync").minSize());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("minSize", matcher.group(2));
     }
@@ -130,7 +130,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the second group provided by the matcher.
      */
     public void secondGroup2() {
-        final Matcher matcher = unit.matcher("executors.named.nio-workers.maxSize");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("nio-worker").maxSize());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("maxSize", matcher.group(2));
     }
@@ -139,16 +139,16 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the second group provided by the matcher.
      */
     public void secondGroup3() {
-        final Matcher matcher = unit.matcher("executors.named.publishing.keepAlive");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("publishing").keepAliveTime());
         Assert.assertTrue(matcher.matches());
-        Assert.assertEquals("keepAlive", matcher.group(2));
+        Assert.assertEquals("keepAliveTime", matcher.group(2));
     }
 
     /**
      * Tests the second group provided by the matcher.
      */
     public void secondGroup4() {
-        final Matcher matcher = unit.matcher("executors.named.background-tasks.keepAliveTimeUnit");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("background-tasks").keepAliveTimeUnit());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("keepAliveTimeUnit", matcher.group(2));
     }
@@ -157,7 +157,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the second group provided by the matcher.
      */
     public void secondGroup5() {
-        final Matcher matcher = unit.matcher("executors.named.custom-single-thread.queue");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("custom-single-thread").queue());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("queue", matcher.group(2));
     }
@@ -166,7 +166,7 @@ public final class ExecutorServiceFactoryPatternTest {
      * Tests the second group provided by the matcher.
      */
     public void secondGroup6() {
-        final Matcher matcher = unit.matcher("executors.named.cleanup-threads.queueMax");
+        final Matcher matcher = unit.matcher(ExecutorsConfig.Named("cleanup-threads").queueMax());
         Assert.assertTrue(matcher.matches());
         Assert.assertEquals("queueMax", matcher.group(2));
     }

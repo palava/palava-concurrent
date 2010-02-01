@@ -19,43 +19,42 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.concurrent.ExecutorService;
-import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * 
- *
- * @author Willi Schoenborn
- */
-public interface ExecutorServiceFactory {
+public final class ExecutorConfig {
+    private final String name;
 
-    String MIN_SIZE = "minSize";
+    public final String BasePrefix = ExecutorsConfig.Prefix + "named.";
 
-    String MAX_SIZE = "maxSize";
+    protected ExecutorConfig(String name) {
+        this.name = name;
+        this.Prefix = BasePrefix + name + ".";
+    }
 
-    String KEEP_ALIVE_TIME = "keepAliveTime";
+    public final String Prefix;
 
-    String KEEP_ALIVE_TIME_UNIT = "keepAliveTimeUnit";
+    public String minSize() {
+        return Prefix + "minSize";
+    }
 
-    String QUEUE = "queue";
+    public String maxSize() {
+        return Prefix + "maxSize";
+    }
 
-    String QUEUE_MAX = "queueMax";
-    
-    Pattern CONFIG_PATTERN = Pattern.compile("^executors\\.named\\.([^\\.]+)\\.([^\\.]+)");
+    public String keepAliveTime() {
+        return Prefix + "keepAliveTime";
+    }
 
-    /**
-     * 
-     * @param name
-     * @throws
-     * @return the threadpool configured by its name 
-     */
-    ExecutorService getExecutorService(String name);
-    
-    /**
-     * 
-     * @param name
-     * @return
-     */
-    ExecutorServiceBuilder buildExecutorService(String name);
-    
+    public String keepAliveTimeUnit() {
+        return Prefix + "keepAliveTimeUnit";
+    }
+
+    public String queue() {
+        return Prefix + "queue";
+    }
+
+    public String queueMax() {
+        return Prefix + "queueMax";
+    }
 }
