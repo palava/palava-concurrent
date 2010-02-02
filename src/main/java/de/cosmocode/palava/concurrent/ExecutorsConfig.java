@@ -19,13 +19,18 @@
 
 package de.cosmocode.palava.concurrent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+/**
+ * 
+ * @author Tobias Sarnowski
+ * @author Willi Schoenborn
+ */
 public class ExecutorsConfig {
-    private ExecutorsConfig() {}
 
-    public static final String Prefix = "executors.";
+    public static final String PREFIX = "executors.";
+    
+    private ExecutorsConfig() {
+        
+    }
 
     public static ExecutorConfig Named(String name) {
         return new ExecutorConfig(name);

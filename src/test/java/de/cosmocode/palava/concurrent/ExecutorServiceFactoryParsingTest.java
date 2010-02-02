@@ -30,7 +30,7 @@ public class ExecutorServiceFactoryParsingTest {
 
     private Properties defaultConfiguration() {
         Properties prop = new Properties();
-        prop.put(CoreConfig.Application, ConcurrentTestApplication.class.getName());
+        prop.put(CoreConfig.APPLICATION, ConcurrentTestApplication.class.getName());
         return prop;
     }
 

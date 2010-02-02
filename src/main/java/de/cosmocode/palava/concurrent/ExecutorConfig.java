@@ -19,42 +19,47 @@
 
 package de.cosmocode.palava.concurrent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.Preconditions;
 
+/**
+ * 
+ *
+ * @author Tobias Sarnowski
+ * @author Willi Schoenborn
+ */
 public final class ExecutorConfig {
-    private final String name;
+    
+    public static final String BASE_PREFIX = ExecutorsConfig.PREFIX + "named.";
 
-    public final String BasePrefix = ExecutorsConfig.Prefix + "named.";
+    private final String prefix;
 
-    protected ExecutorConfig(String name) {
-        this.name = name;
-        this.Prefix = BasePrefix + name + ".";
+    ExecutorConfig(String name) {
+        Preconditions.checkNotNull(name, "Name");
+        this.prefix = BASE_PREFIX + name + ".";
     }
 
-    public final String Prefix;
-
     public String minSize() {
-        return Prefix + "minSize";
+        return prefix + "minSize";
     }
 
     public String maxSize() {
-        return Prefix + "maxSize";
+        return prefix + "maxSize";
     }
 
     public String keepAliveTime() {
-        return Prefix + "keepAliveTime";
+        return prefix + "keepAliveTime";
     }
 
     public String keepAliveTimeUnit() {
-        return Prefix + "keepAliveTimeUnit";
+        return prefix + "keepAliveTimeUnit";
     }
 
     public String queue() {
-        return Prefix + "queue";
+        return prefix + "queue";
     }
 
     public String queueMax() {
-        return Prefix + "queueMax";
+        return prefix + "queueMax";
     }
+    
 }
