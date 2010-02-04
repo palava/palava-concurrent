@@ -22,11 +22,13 @@ package de.cosmocode.palava.concurrent;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
 import com.google.inject.Singleton;
 
@@ -39,9 +41,9 @@ import com.google.inject.Singleton;
 @Singleton
 final class DefaultThreadProvider implements ThreadProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(DefaultThreadProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultThreadProvider.class);
 
-    private final ThreadFactory cachedFactory = new Factory();
+    private final ThreadFactory cachedFactory = new Factory(Executors.defaultThreadFactory());
     
     private final Set<Thread> threads;
     
@@ -87,29 +89,18 @@ final class DefaultThreadProvider implements ThreadProvider {
         
         private final ThreadFactory factory;
         
-        public Factory() {
-            this(null);
-        }
-        
         public Factory(ThreadFactory factory) {
-            this.factory = factory;
+            this.factory = Preconditions.checkNotNull(factory, "Factory");
         }
         
         @Override
         public Thread newThread(Runnable runnable) {
-            final Thread thread = factory == null ? new Thread(runnable) : factory.newThread(runnable);
+            final Thread thread = factory.newThread(runnable);
             threads.add(thread);
-            if (log.isTraceEnabled()) {
-                log.trace("New thread {}, {} thread(s) currently in use", thread, threadSize);
-            }
+            LOG.trace("New thread {}, {} thread(s) currently in use", thread, threadSize);
             return thread;
         }
         
-    }
-    
-    @Override
-    public ThreadStatistic createStatistic() {
-        return new DefaultThreadStatistic(threads);
     }
     
 }

@@ -49,12 +49,4 @@ public interface ThreadProvider extends ThreadFactory {
      */
     ThreadFactory newThreadFactory(ThreadFactory factory);
     
-    /**
-     * Creates {@link ThreadStatistic}s for all
-     * threads currently in use.
-     * 
-     * @return new {@link ThreadStatistic}
-     */
-    ThreadStatistic createStatistic();
-    
 }
