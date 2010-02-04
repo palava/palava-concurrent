@@ -1,6 +1,6 @@
 /**
  * palava - a java-php-bridge
- * Copyright (C) 2007-2010  CosmoCode GmbH
+ * Copyright (C) 2007  CosmoCode GmbH
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,6 +30,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
+import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.LifecycleException;
+import de.cosmocode.palava.jmx.MBeanServerProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +45,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import de.cosmocode.palava.core.Settings;
+
+import javax.management.*;
 
 /**
  * Can parse ExecutorService configurations from the framework's settings
@@ -88,13 +93,17 @@ import de.cosmocode.palava.core.Settings;
  * @author Willi Schoenborn
  */
 @Singleton
-class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
+class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultExecutorServiceFactoryMBean, Disposable {
     
     private static final Logger LOG = LoggerFactory.getLogger(DefaultExecutorServiceFactory.class);
     
     private final Map<String, ExecutorService> configuredExecutors = Maps.newHashMap();
 
     private final Provider<ExecutorServiceBuilder> provider;
+
+	private ObjectName mBeanName;
+	private MBeanServer mBeanServer;
+
     
     @Inject
     public DefaultExecutorServiceFactory(@Settings Properties settings, Provider<ExecutorServiceBuilder> provider) {
@@ -167,6 +176,29 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
             configuredExecutors.put(name, builder.build());
         }
     }
+
+	@Inject(optional=true)
+	public void registerWithMBeanServer(MBeanServerProvider mBeanServerProvider) throws MBeanRegistrationException, InstanceAlreadyExistsException, NotCompliantMBeanException, MalformedObjectNameException {
+		mBeanName = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
+		mBeanServer = mBeanServerProvider.getMBeanServer();
+
+		mBeanServer.registerMBean(this, mBeanName);
+	}
+
+	@Override
+	public void dispose() throws LifecycleException {
+		if (mBeanServer != null) {
+			if (mBeanServer.isRegistered(mBeanName)) {
+				try {
+					mBeanServer.unregisterMBean(mBeanName);
+				} catch (InstanceNotFoundException e) {
+					throw new LifecycleException(e);
+				} catch (MBeanRegistrationException e) {
+					throw new LifecycleException(e);
+				}
+			}
+		}
+	}
     
     @Override
     public ExecutorService getExecutorService(String name) {
@@ -192,8 +224,13 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
             );
         }
     }
-    
-    /**
+
+	@Override
+	public Set<String> getExecutorServiceNames() {
+		return configuredExecutors.keySet();
+	}
+
+	/**
      * An {@link ExecutorServiceBuilder} which intercepts the build-methods and
      * keeps a reference to the constructed executor service.
      * 

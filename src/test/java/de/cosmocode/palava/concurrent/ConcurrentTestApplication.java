@@ -1,6 +1,6 @@
 /**
  * palava - a java-php-bridge
- * Copyright (C) 2007-2010  CosmoCode GmbH
+ * Copyright (C) 2007  CosmoCode GmbH
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,15 +21,16 @@ package de.cosmocode.palava.concurrent;
 
 import de.cosmocode.palava.core.RegistryModule;
 import de.cosmocode.palava.core.ServiceModule;
+import de.cosmocode.palava.jmx.SystemJmxModule;
 
 public class ConcurrentTestApplication extends ServiceModule {
 
     @Override
     protected void configure() {
         install(new RegistryModule());
-
-        bind(ThreadProvider.class).to(DefaultThreadProvider.class);
-        bind(ExecutorServiceBuilder.class).to(DefaultExecutorServiceBuilder.class);
+	    install(new SystemJmxModule());
+		install(new ConcurrencyModule());
+	    
 		serve(DefaultExecutorServiceFactoryService.class);
     }
 }
