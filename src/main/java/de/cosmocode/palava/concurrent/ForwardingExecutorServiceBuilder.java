@@ -25,15 +25,16 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ForwardingObject;
 
 /**
- * 
+ * Decorates an {@link ExecutorServiceBuilder} and allows adding behaviour.
  *
  * @author Willi Schoenborn
  */
-abstract class ForwardingExecutorServiceBuilder implements ExecutorServiceBuilder {
+abstract class ForwardingExecutorServiceBuilder extends ForwardingObject implements ExecutorServiceBuilder {
 
+    @Override
     protected abstract ExecutorServiceBuilder delegate();
 
     @Override
