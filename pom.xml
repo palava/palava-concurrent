@@ -10,7 +10,7 @@
     <version>2.0-SNAPSHOT</version>
   </parent>
   <scm>
-    <developerConnection>scm:svn:http://palava.svn.cosmocode.de/palava-concurrent/trunk</developerConnection>
+    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-concurrent/trunk</developerConnection>
   </scm>
   <dependencies>
     <dependency>
