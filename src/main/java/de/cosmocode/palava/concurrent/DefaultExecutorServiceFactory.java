@@ -177,8 +177,8 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
         }
     }
 
-	@Inject(optional=true)
-	public void registerWithMBeanServer(MBeanServerProvider mBeanServerProvider) throws MBeanRegistrationException, InstanceAlreadyExistsException, NotCompliantMBeanException, MalformedObjectNameException {
+	@Inject(optional = true)
+	public void registerWithMBeanServer(MBeanServerProvider mBeanServerProvider) throws JMException {
 		mBeanName = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
 		mBeanServer = mBeanServerProvider.getMBeanServer();
 
@@ -187,15 +187,14 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
 
 	@Override
 	public void dispose() throws LifecycleException {
-		if (mBeanServer != null) {
-			if (mBeanServer.isRegistered(mBeanName)) {
-				try {
-					mBeanServer.unregisterMBean(mBeanName);
-				} catch (InstanceNotFoundException e) {
-					throw new LifecycleException(e);
-				} catch (MBeanRegistrationException e) {
-					throw new LifecycleException(e);
-				}
+		if (mBeanServer == null) return;
+		if (mBeanServer.isRegistered(mBeanName)) {
+			try {
+				mBeanServer.unregisterMBean(mBeanName);
+			} catch (InstanceNotFoundException e) {
+				throw new LifecycleException(e);
+			} catch (MBeanRegistrationException e) {
+				throw new LifecycleException(e);
 			}
 		}
 	}
