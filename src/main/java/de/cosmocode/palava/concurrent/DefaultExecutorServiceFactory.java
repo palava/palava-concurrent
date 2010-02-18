@@ -101,9 +101,9 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
 
     private final Provider<ExecutorServiceBuilder> provider;
 
-	private ObjectName mBeanName;
-	private MBeanServer mBeanServer;
-
+    private ObjectName mBeanName;
+    
+    private MBeanServer mBeanServer;
     
     @Inject
     public DefaultExecutorServiceFactory(@Settings Properties settings, Provider<ExecutorServiceBuilder> provider) {
@@ -140,9 +140,10 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
         
         LOG.debug("{}", configs);
         
-        for (String name : configs.keySet()) {
+        for (Entry<String, Map<String, String>> namedConfig : configs.entrySet()) {
+            final String name = namedConfig.getKey();
             final ExecutorServiceBuilder builder = provider.get();
-            final Map<String, String> config = configs.get(name);
+            final Map<String, String> config = namedConfig.getValue();
             LOG.debug("Creating executor service {}", name);
             for (Entry<String, String> entry : config.entrySet()) {
                 final String key = entry.getKey();
@@ -177,27 +178,27 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
         }
     }
 
-	@Inject(optional = true)
-	public void registerWithMBeanServer(MBeanServerProvider mBeanServerProvider) throws JMException {
-		mBeanName = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
-		mBeanServer = mBeanServerProvider.getMBeanServer();
+    @Inject(optional = true)
+    public void registerWithMBeanServer(MBeanServerProvider mBeanServerProvider) throws JMException {
+        mBeanName = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
+        mBeanServer = mBeanServerProvider.getMBeanServer();
 
-		mBeanServer.registerMBean(this, mBeanName);
-	}
+        mBeanServer.registerMBean(this, mBeanName);
+    }
 
-	@Override
-	public void dispose() throws LifecycleException {
-		if (mBeanServer == null) return;
-		if (mBeanServer.isRegistered(mBeanName)) {
-			try {
-				mBeanServer.unregisterMBean(mBeanName);
-			} catch (InstanceNotFoundException e) {
-				throw new LifecycleException(e);
-			} catch (MBeanRegistrationException e) {
-				throw new LifecycleException(e);
-			}
-		}
-	}
+    @Override
+    public void dispose() throws LifecycleException {
+        if (mBeanServer == null) return;
+        if (mBeanServer.isRegistered(mBeanName)) {
+            try {
+                mBeanServer.unregisterMBean(mBeanName);
+            } catch (InstanceNotFoundException e) {
+                throw new LifecycleException(e);
+            } catch (MBeanRegistrationException e) {
+                throw new LifecycleException(e);
+            }
+        }
+    }
     
     @Override
     public ExecutorService getExecutorService(String name) {
@@ -224,12 +225,12 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
         }
     }
 
-	@Override
-	public Set<String> getExecutorServiceNames() {
-		return configuredExecutors.keySet();
-	}
+    @Override
+    public Set<String> getExecutorServiceNames() {
+        return configuredExecutors.keySet();
+    }
 
-	/**
+    /**
      * An {@link ExecutorServiceBuilder} which intercepts the build-methods and
      * keeps a reference to the constructed executor service.
      * 

@@ -32,7 +32,7 @@ public class ExecutorsConfig {
         
     }
 
-    public static ExecutorConfig Named(String name) {
+    public static ExecutorConfig named(String name) {
         return new ExecutorConfig(name);
     }
 
