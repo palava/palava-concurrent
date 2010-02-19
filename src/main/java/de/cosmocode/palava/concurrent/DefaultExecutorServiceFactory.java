@@ -204,6 +204,7 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
     
     @Override
     public void initialize() throws LifecycleException {
+        if (mBeanServer == null) return;
         try {
             mBeanServer.registerMBean(this, BEAN_NAME);
         } catch (JMException e) {
