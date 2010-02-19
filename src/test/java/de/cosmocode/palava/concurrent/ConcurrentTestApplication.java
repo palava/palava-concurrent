@@ -19,17 +19,22 @@
 
 package de.cosmocode.palava.concurrent;
 
-import de.cosmocode.palava.core.RegistryModule;
-import de.cosmocode.palava.core.ServiceModule;
+import com.google.inject.Binder;
+import com.google.inject.Module;
 
-public class ConcurrentTestApplication extends ServiceModule {
+import de.cosmocode.palava.core.RegistryModule;
+
+/**
+ * Test application for the concurrency test.
+ *
+ * @author Willi Schoenborn
+ */
+public class ConcurrentTestApplication implements Module {
 
     @Override
-    protected void configure() {
-        install(new RegistryModule());
-        install(new ConcurrencyModule());
-        
-        serve(DefaultExecutorServiceFactoryService.class);
+    public void configure(Binder binder) {
+        binder.install(new RegistryModule());
+        binder.install(new ConcurrencyModule());
     }
     
 }
