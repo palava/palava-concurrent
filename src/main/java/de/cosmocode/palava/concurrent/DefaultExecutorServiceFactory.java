@@ -30,9 +30,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import de.cosmocode.palava.core.lifecycle.Disposable;
-import de.cosmocode.palava.core.lifecycle.LifecycleException;
-import de.cosmocode.palava.jmx.MBeanServerProvider;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +48,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import de.cosmocode.palava.core.Settings;
-
-import javax.management.*;
+import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
  * Can parse ExecutorService configurations from the framework's settings
@@ -179,9 +182,9 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
     }
 
     @Inject(optional = true)
-    public void registerWithMBeanServer(MBeanServerProvider mBeanServerProvider) throws JMException {
+    public void registerWithMBeanServer(MBeanServer mBeanServer) throws JMException {
         mBeanName = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
-        mBeanServer = mBeanServerProvider.getMBeanServer();
+        this.mBeanServer = mBeanServer;
 
         mBeanServer.registerMBean(this, mBeanName);
     }

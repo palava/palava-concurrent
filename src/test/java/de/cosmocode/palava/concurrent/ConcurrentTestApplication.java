@@ -21,14 +21,14 @@ package de.cosmocode.palava.concurrent;
 
 import de.cosmocode.palava.core.RegistryModule;
 import de.cosmocode.palava.core.ServiceModule;
-import de.cosmocode.palava.jmx.SystemJmxModule;
+import de.cosmocode.palava.jmx.PlatformJmxModule;
 
 public class ConcurrentTestApplication extends ServiceModule {
 
     @Override
     protected void configure() {
         install(new RegistryModule());
-	    install(new SystemJmxModule());
+	    install(new PlatformJmxModule());
 		install(new ConcurrencyModule());
 	    
 		serve(DefaultExecutorServiceFactoryService.class);
