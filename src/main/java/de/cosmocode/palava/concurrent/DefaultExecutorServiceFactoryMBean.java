@@ -21,6 +21,17 @@ package de.cosmocode.palava.concurrent;
 
 import java.util.Set;
 
+/**
+ * TODO add javadoc
+ * 
+ * @author Tobias Sarnowski
+ */
 public interface DefaultExecutorServiceFactoryMBean {
-	Set<String> getExecutorServiceNames();
+    
+    /**
+     * 
+     * @return
+     */
+    Set<String> getExecutorServiceNames();
+
 }

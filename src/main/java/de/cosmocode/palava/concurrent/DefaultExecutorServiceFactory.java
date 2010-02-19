@@ -34,6 +34,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ import com.google.inject.Singleton;
 
 import de.cosmocode.palava.core.Settings;
 import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
@@ -96,15 +98,24 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  * @author Willi Schoenborn
  */
 @Singleton
-class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultExecutorServiceFactoryMBean, Disposable {
+class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultExecutorServiceFactoryMBean, 
+    Initializable, Disposable {
     
     private static final Logger LOG = LoggerFactory.getLogger(DefaultExecutorServiceFactory.class);
+    
+    private static final ObjectName BEAN_NAME;
+    
+    static {
+        try {
+            BEAN_NAME = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
+        } catch (MalformedObjectNameException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
     
     private final Map<String, ExecutorService> configuredExecutors = Maps.newHashMap();
 
     private final Provider<ExecutorServiceBuilder> provider;
-
-    private ObjectName mBeanName;
     
     private MBeanServer mBeanServer;
     
@@ -145,56 +156,67 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
         
         for (Entry<String, Map<String, String>> namedConfig : configs.entrySet()) {
             final String name = namedConfig.getKey();
-            final ExecutorServiceBuilder builder = provider.get();
-            final Map<String, String> config = namedConfig.getValue();
-            LOG.debug("Creating executor service {}", name);
-            for (Entry<String, String> entry : config.entrySet()) {
-                final String key = entry.getKey();
-                final String value = entry.getValue();
-                if (MIN_SIZE.equals(key)) {
-                    builder.minSize(Integer.parseInt(value));
-                } else if (MAX_SIZE.equals(key)) {
-                    builder.maxSize(Integer.parseInt(value));
-                } else if (KEEP_ALIVE_TIME.equals(key) || KEEP_ALIVE_TIME_UNIT.equals(key)) {
-                    final String keepAlive = config.get(KEEP_ALIVE_TIME);
-                    final String keepAliveTimeUnit = config.get(KEEP_ALIVE_TIME_UNIT);
-                    if (keepAlive == null) {
-                        throw new IllegalArgumentException("keepAliveTime not set");
-                    }
-                    if (keepAliveTimeUnit == null) {
-                        throw new IllegalArgumentException("keepAliveTimeUnit not set");
-                    }
-                    builder.keepAlive(Long.parseLong(keepAlive), TimeUnit.valueOf(keepAliveTimeUnit));
-                } else if (QUEUE.equals(key)) {
-                    final QueueMode mode = QueueMode.valueOf(value);
-                    final String queueMax = config.get(QUEUE_MAX);
-                    final BlockingQueue<Runnable> queue;
-                    if (queueMax == null) {
-                        queue = mode.create();
-                    } else {
-                        queue = mode.create(Integer.parseInt(queueMax));
-                    }
-                    builder.queue(queue);
-                }
-            }
-            configuredExecutors.put(name, builder.build());
+            configuredExecutors.put(name, build(namedConfig));
         }
+    }
+    
+    private ExecutorService build(Entry<String, Map<String, String>> namedConfig) {
+        final ExecutorServiceBuilder builder = provider.get();
+        final String name = namedConfig.getKey();
+        final Map<String, String> config = namedConfig.getValue();
+        LOG.debug("Creating executor service {}", name);
+        for (Entry<String, String> entry : config.entrySet()) {
+            final String key = entry.getKey();
+            final String value = entry.getValue();
+            if (MIN_SIZE.equals(key)) {
+                builder.minSize(Integer.parseInt(value));
+            } else if (MAX_SIZE.equals(key)) {
+                builder.maxSize(Integer.parseInt(value));
+            } else if (KEEP_ALIVE_TIME.equals(key) || KEEP_ALIVE_TIME_UNIT.equals(key)) {
+                final String keepAlive = config.get(KEEP_ALIVE_TIME);
+                final String keepAliveTimeUnit = config.get(KEEP_ALIVE_TIME_UNIT);
+                if (keepAlive == null) {
+                    throw new IllegalArgumentException("keepAliveTime not set");
+                }
+                if (keepAliveTimeUnit == null) {
+                    throw new IllegalArgumentException("keepAliveTimeUnit not set");
+                }
+                builder.keepAlive(Long.parseLong(keepAlive), TimeUnit.valueOf(keepAliveTimeUnit));
+            } else if (QUEUE.equals(key)) {
+                final QueueMode mode = QueueMode.valueOf(value);
+                final String queueMax = config.get(QUEUE_MAX);
+                final BlockingQueue<Runnable> queue;
+                if (queueMax == null) {
+                    queue = mode.create();
+                } else {
+                    queue = mode.create(Integer.parseInt(queueMax));
+                }
+                builder.queue(queue);
+            }
+        }
+        return builder.build();
     }
 
     @Inject(optional = true)
-    public void registerWithMBeanServer(MBeanServer mBeanServer) throws JMException {
-        mBeanName = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
+    public void setMBeanServer(MBeanServer mBeanServer) {
         this.mBeanServer = mBeanServer;
-
-        mBeanServer.registerMBean(this, mBeanName);
+    }
+    
+    @Override
+    public void initialize() throws LifecycleException {
+        try {
+            mBeanServer.registerMBean(this, BEAN_NAME);
+        } catch (JMException e) {
+            throw new LifecycleException(e);
+        }
     }
 
     @Override
     public void dispose() throws LifecycleException {
         if (mBeanServer == null) return;
-        if (mBeanServer.isRegistered(mBeanName)) {
+        if (mBeanServer.isRegistered(BEAN_NAME)) {
             try {
-                mBeanServer.unregisterMBean(mBeanName);
+                mBeanServer.unregisterMBean(BEAN_NAME);
             } catch (InstanceNotFoundException e) {
                 throw new LifecycleException(e);
             } catch (MBeanRegistrationException e) {
