@@ -21,6 +21,7 @@ package de.cosmocode.palava.concurrent;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.Singleton;
 
 /**
  * A {@link Module} for the {@link de.cosmocode.palava.concurrent} package.
@@ -31,9 +32,9 @@ public final class ConcurrencyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.bind(ExecutorServiceBuilder.class).to(DefaultExecutorServiceBuilder.class);
-        binder.bind(ExecutorServiceFactory.class).to(DefaultExecutorServiceFactory.class);
-        binder.bind(ThreadProvider.class).to(DefaultThreadProvider.class);
+        binder.bind(ExecutorServiceBuilder.class).to(DefaultExecutorServiceBuilder.class).in(Singleton.class);
+        binder.bind(ExecutorServiceFactory.class).to(DefaultExecutorServiceFactory.class).in(Singleton.class);
+        binder.bind(ThreadProvider.class).to(DefaultThreadProvider.class).in(Singleton.class);
     }
 
 }

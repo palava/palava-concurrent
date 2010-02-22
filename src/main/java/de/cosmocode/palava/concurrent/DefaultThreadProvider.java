@@ -38,7 +38,6 @@ import com.google.inject.Singleton;
  * @author Oliver Lorenz
  * @author Willi Schoenborn
  */
-@Singleton
 final class DefaultThreadProvider implements ThreadProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultThreadProvider.class);

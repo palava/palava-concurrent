@@ -97,7 +97,6 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  * @author Tobias Sarnowski
  * @author Willi Schoenborn
  */
-@Singleton
 class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultExecutorServiceFactoryMBean, 
     Initializable, Disposable {
     
