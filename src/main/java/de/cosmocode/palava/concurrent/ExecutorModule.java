@@ -1,8 +1,26 @@
+/**
+ * palava - a java-php-bridge
+ * Copyright (C) 2007-2010  CosmoCode GmbH
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 package de.cosmocode.palava.concurrent;
 
 import java.lang.annotation.Annotation;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -27,16 +45,14 @@ public class ExecutorModule extends PrivateModule {
     
     private final String name;
     
-    private final boolean includeThreadFactory;
-    
     public ExecutorModule(Class<? extends Annotation> annotation, String name) {
-        this(annotation, name, false);
-    }
-    
-    public ExecutorModule(Class<? extends Annotation> annotation, String name, boolean includeThreadFactory) {
         this.key = Key.get(ExecutorService.class, Preconditions.checkNotNull(annotation, "Annotation"));
         this.name = Preconditions.checkNotNull(name, "Name");
-        this.includeThreadFactory = includeThreadFactory;
+    }
+    
+    public ExecutorModule(Annotation annotation, String name) {
+        this.key = Key.get(ExecutorService.class, Preconditions.checkNotNull(annotation, "Annotation"));
+        this.name = Preconditions.checkNotNull(name, "Name");
     }
     
     @Override
@@ -68,11 +84,6 @@ public class ExecutorModule extends PrivateModule {
         
         bind(TimeUnit.class).annotatedWith(Names.named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT)).to(
             Key.get(TimeUnit.class, Names.named(config.shutdownTimeoutUnit())));
-        
-        if (includeThreadFactory) {
-            bind(ThreadFactory.class).annotatedWith(Names.named(ExecutorServiceConfig.THREAD_FACTORY)).to(
-                Key.get(ThreadFactory.class, Names.named(config.threadFactory())));
-        }
         
         bind(key).to(ConfigurableExecutorService.class).in(Singleton.class);
         expose(key);

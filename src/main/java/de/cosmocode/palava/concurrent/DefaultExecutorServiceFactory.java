@@ -46,7 +46,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 
 import de.cosmocode.palava.core.Settings;
 import de.cosmocode.palava.core.lifecycle.Disposable;

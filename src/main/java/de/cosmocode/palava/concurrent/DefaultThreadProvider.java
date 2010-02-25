@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
-import com.google.inject.Singleton;
 
 /**
  * Default implementation of the {@link ThreadProvider} interface.
