@@ -33,7 +33,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
 /**
- * 
+ * This module can be used to rebind general executor service
+ * configuration keys to specific ones.
  *
  * @author Willi Schoenborn
  */
@@ -59,7 +60,7 @@ public class ExecutorModule extends PrivateModule {
     public final void configure() {
         LOG.trace("Binding executor configuration for {} using name {}", key, name);
         
-        final ExecutorConfig config = ExecutorsConfig.named(name);
+        final ExecutorConfig config = ExecutorConfigs.named(name);
 
         bind(int.class).annotatedWith(Names.named(ExecutorServiceConfig.MIN_POOL_SIZE)).to(
             Key.get(int.class, Names.named(config.minPoolSize())));

@@ -19,20 +19,32 @@
 
 package de.cosmocode.palava.concurrent;
 
+import com.google.common.base.Preconditions;
+
 /**
+ * Static factory class for dynamic executor configurations.
  * 
  * @author Tobias Sarnowski
  * @author Willi Schoenborn
  */
-public class ExecutorsConfig {
+public final class ExecutorConfigs {
 
     public static final String PREFIX = "executors.";
     
-    private ExecutorsConfig() {
+    private ExecutorConfigs() {
         
     }
 
+    /**
+     * Create an {@link ExecutorConfig} using the given name.
+     * 
+     * @param name the configured name
+     * @throws NullPointerException if name is null
+     * @return an {@link ExecutorConfig} which uses the given name to
+     *         create named config keys
+     */
     public static ExecutorConfig named(String name) {
+        Preconditions.checkNotNull(name, "Name");
         return new ExecutorConfig(name);
     }
 

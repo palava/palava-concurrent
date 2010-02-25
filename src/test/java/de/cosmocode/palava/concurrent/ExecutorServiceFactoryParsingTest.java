@@ -64,7 +64,7 @@ public class ExecutorServiceFactoryParsingTest {
     public void singleConfigurationSimple() {
         Properties conf = defaultConfiguration();
 
-        conf.put(ExecutorsConfig.named("blablub").queue(), "SYNCHRONOUS");
+        conf.put(ExecutorConfigs.named("blablub").queue(), "SYNCHRONOUS");
 
         Framework f = startFramework(conf);
         stopFramework(f);

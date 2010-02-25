@@ -30,8 +30,10 @@ import de.cosmocode.patterns.Builder;
 /**
  * A {@link Builder} for {@link ExecutorService}s.
  *
+ * @deprecated declare a custom binding annotation and use an {@link ExecutorModule}
  * @author Willi Schoenborn
  */
+@Deprecated
 public interface ExecutorServiceBuilder extends Builder<ExecutorService> {
     
     int DEFAULT_MIN_POOL_SIZE = 0;

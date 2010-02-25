@@ -20,13 +20,16 @@
 package de.cosmocode.palava.concurrent;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
 /**
+ * A Factory for {@link ExecutorService}s.
  * 
- *
+ * @deprecated declare a custom binding annotation and use an {@link ExecutorModule}
  * @author Willi Schoenborn
  */
+@Deprecated
 public interface ExecutorServiceFactory {
 
     String MIN_SIZE = "minSize";
@@ -44,18 +47,19 @@ public interface ExecutorServiceFactory {
     Pattern CONFIG_PATTERN = Pattern.compile("^executors\\.named\\.([^\\.]+)\\.([^\\.]+)");
 
     /**
+     * Retrieves a configured {@link ExecutorService}.
      * 
-     * @param name
-     * @throws
+     * @param name the name of the service
      * @return the threadpool configured by its name 
      */
     ExecutorService getExecutorService(String name);
     
     /**
+     * Retrieves a configured {@link ScheduledExecutorService}.
      * 
-     * @param name
-     * @return
+     * @param name the name of the service
+     * @return the scheduled threadpool configured via it's name
      */
-    ExecutorServiceBuilder buildExecutorService(String name);
+    ExecutorServiceBuilder getScheduledExecutorService(String name);
     
 }

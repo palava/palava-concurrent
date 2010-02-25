@@ -30,13 +30,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.JMException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +41,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import de.cosmocode.palava.core.Settings;
-import de.cosmocode.palava.core.lifecycle.Disposable;
-import de.cosmocode.palava.core.lifecycle.Initializable;
-import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
  * Can parse ExecutorService configurations from the framework's settings
@@ -96,26 +86,13 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  * @author Tobias Sarnowski
  * @author Willi Schoenborn
  */
-class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultExecutorServiceFactoryMBean, 
-    Initializable, Disposable {
+class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
     
     private static final Logger LOG = LoggerFactory.getLogger(DefaultExecutorServiceFactory.class);
-    
-    private static final ObjectName BEAN_NAME;
-    
-    static {
-        try {
-            BEAN_NAME = new ObjectName("de.cosmocode.palava.concurrent:type=DefaultExecutorServiceFactory");
-        } catch (MalformedObjectNameException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
     
     private final Map<String, ExecutorService> configuredExecutors = Maps.newHashMap();
 
     private final Provider<ExecutorServiceBuilder> provider;
-    
-    private MBeanServer mBeanServer;
     
     @Inject
     public DefaultExecutorServiceFactory(@Settings Properties settings, Provider<ExecutorServiceBuilder> provider) {
@@ -195,35 +172,6 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
         return builder.build();
     }
 
-    @Inject(optional = true)
-    public void setMBeanServer(MBeanServer mBeanServer) {
-        this.mBeanServer = mBeanServer;
-    }
-    
-    @Override
-    public void initialize() throws LifecycleException {
-        if (mBeanServer == null) return;
-        try {
-            mBeanServer.registerMBean(this, BEAN_NAME);
-        } catch (JMException e) {
-            throw new LifecycleException(e);
-        }
-    }
-
-    @Override
-    public void dispose() throws LifecycleException {
-        if (mBeanServer == null) return;
-        if (mBeanServer.isRegistered(BEAN_NAME)) {
-            try {
-                mBeanServer.unregisterMBean(BEAN_NAME);
-            } catch (InstanceNotFoundException e) {
-                throw new LifecycleException(e);
-            } catch (MBeanRegistrationException e) {
-                throw new LifecycleException(e);
-            }
-        }
-    }
-    
     @Override
     public ExecutorService getExecutorService(String name) {
         Preconditions.checkNotNull(name, "Name");
@@ -236,7 +184,7 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
     }
     
     @Override
-    public ExecutorServiceBuilder buildExecutorService(String name) {
+    public ExecutorServiceBuilder getScheduledExecutorService(String name) {
         Preconditions.checkNotNull(name, "Name");
         final ExecutorService cached = configuredExecutors.get(name);
         if (cached == null) {
@@ -247,11 +195,6 @@ class DefaultExecutorServiceFactory implements ExecutorServiceFactory, DefaultEx
                 String.format("There is already a configured executor service with the name '%s'", name)
             );
         }
-    }
-
-    @Override
-    public Set<String> getExecutorServiceNames() {
-        return configuredExecutors.keySet();
     }
 
     /**

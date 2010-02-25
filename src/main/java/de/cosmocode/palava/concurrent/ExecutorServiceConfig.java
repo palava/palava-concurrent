@@ -39,8 +39,6 @@ final class ExecutorServiceConfig {
     
     public static final String QUEUE_CAPACITY = "queueCapacity";
     
-    public static final String THREAD_FACTORY = "threadFactory";
-    
     public static final String SHUTDOWN_TIMEOUT = "shutdownTimeout";
     
     public static final String SHUTDOWN_TIMEOUT_UNIT = "shutdownTimeoutUnit";

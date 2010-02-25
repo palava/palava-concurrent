@@ -22,14 +22,15 @@ package de.cosmocode.palava.concurrent;
 import com.google.common.base.Preconditions;
 
 /**
- * 
+ * A configuration helper class which prevents
+ * typing errors.
  *
  * @author Tobias Sarnowski
  * @author Willi Schoenborn
  */
 public final class ExecutorConfig {
     
-    public static final String BASE_PREFIX = ExecutorsConfig.PREFIX + "named.";
+    public static final String BASE_PREFIX = ExecutorConfigs.PREFIX + "named.";
 
     private final String prefix;
 
@@ -39,73 +40,117 @@ public final class ExecutorConfig {
     }
 
     /**
+     * Create a prefixed config key for minSize.
+     * 
      * @deprecated use {@link ExecutorConfig#minPoolSize()} instead
-     * @return
+     * @return the prefixed minSize config key
      */
     @Deprecated
     public String minSize() {
         return prefix + "minSize";
     }
     
+    /**
+     * Create a prefixed config key for minPoolSize.
+     * 
+     * @return the prefixed minPoolSize config key
+     */
     public String minPoolSize() {
         return prefix + ExecutorServiceConfig.MIN_POOL_SIZE;
     }
 
     /**
+     * Create a prefixed config key for maxSize.
+     * 
      * @deprecated use {@link ExecutorConfig#maxPoolSize()} instead
-     * @return
+     * @return the prefixed maxSize config key
      */
     @Deprecated
     public String maxSize() {
         return prefix + "maxSize";
     }
-    
+
+    /**
+     * Create a prefixed config key for maxPoolSize.
+     * 
+     * @return the prefixed maxPoolSize config key
+     */
     public String maxPoolSize() {
         return prefix + ExecutorServiceConfig.MAX_POOL_SIZE;
     }
 
+    /**
+     * Create a prefixed config key for keepAliveTime.
+     * 
+     * @return the prefixed keepAliveTime config key
+     */
     public String keepAliveTime() {
         return prefix + ExecutorServiceConfig.KEEP_ALIVE_TIME;
     }
 
+    /**
+     * Create a prefixed config key for keepAliveTimeUnit.
+     * 
+     * @return the prefixed keepAliveTimeUnit config key
+     */
     public String keepAliveTimeUnit() {
         return prefix + ExecutorServiceConfig.KEEP_ALIVE_TIME_UNIT;
     }
 
     /**
+     * Create a prefixed config key for queue.
+     * 
      * @deprecated use {@link ExecutorConfig#queueMode()} instead
-     * @return
+     * @return the prefixed queue config key
      */
     @Deprecated
     public String queue() {
         return prefix + "queue";
     }
     
+    /**
+     * Create a prefixed config key for queueMode.
+     * 
+     * @return the prefixed queueMode config key
+     */
     public String queueMode() {
         return prefix + ExecutorServiceConfig.QUEUE_MODE;
     }
 
     /**
+     * Create a prefixed config key for queueMax.
+     * 
      * @deprecated use {@link ExecutorConfig#queueCapacity()} instead
-     * @return
+     * @return the prefixed queueMax config key
      */
     @Deprecated
     public String queueMax() {
         return prefix + "queueMax";
     }
 
+    /**
+     * Create a prefixed config key for queueCapacity.
+     * 
+     * @return the prefixed queueCapacity config key
+     */
     public String queueCapacity() {
         return prefix + ExecutorServiceConfig.QUEUE_CAPACITY;
     }
     
-    public String threadFactory() {
-        return prefix + ExecutorServiceConfig.THREAD_FACTORY;
-    }
-    
+    /**
+     * Create a prefixed config key for shutdownTimeout.
+     * 
+     * @return the prefixed shutdownTimeout config key
+     */
     public String shutdownTimeout() {
         return prefix + ExecutorServiceConfig.SHUTDOWN_TIMEOUT;
     }
-    
+
+    /**
+     * Create a prefixed config key for shutdownTimeoutUnit.
+     * 
+     * @return the prefixed shutdownTimeoutUnit config key
+     */
     public String shutdownTimeoutUnit() {
         return prefix + ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT;
     }

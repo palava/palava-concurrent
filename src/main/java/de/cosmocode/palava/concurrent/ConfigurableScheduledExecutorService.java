@@ -1,31 +1,13 @@
-/**
- * palava - a java-php-bridge
- * Copyright (C) 2007-2010  CosmoCode GmbH
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
-
 package de.cosmocode.palava.concurrent;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -40,60 +22,38 @@ import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
- * An {@link ExecutorService} which can be easily configured using
- * the constructor.
+ * A {@link ScheduledExecutorService} which can be configured easily configured
+ * using the constructor.
  *
  * @author Willi Schoenborn
  */
-final class ConfigurableExecutorService implements ExecutorService, Disposable {
+final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Disposable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigurableExecutorService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ConfigurableScheduledExecutorService.class);
     
     private final int minPoolSize;
-    
-    private final int maxPoolSize;
-    
-    private final long keepAliveTime;
-    
-    private final TimeUnit keepAliveTimeUnit;
-    
-    private final QueueMode queueMode;
     
     private final long shutdownTimeout;
     
     private final TimeUnit shutdownTimeoutUnit;
-    
-    private final ExecutorService executor;
+
+    private final ScheduledExecutorService executor;
     
     @Inject
-    public ConfigurableExecutorService(
+    public ConfigurableScheduledExecutorService(
         @Named(ExecutorServiceConfig.MIN_POOL_SIZE) int minPoolSize,
-        @Named(ExecutorServiceConfig.MAX_POOL_SIZE) int maxPoolSize,
-        @Named(ExecutorServiceConfig.KEEP_ALIVE_TIME) long keepAliveTime,
-        @Named(ExecutorServiceConfig.KEEP_ALIVE_TIME_UNIT) TimeUnit keepAliveTimeUnit,
-        @Named(ExecutorServiceConfig.QUEUE_MODE) QueueMode queueMode,
-        @Named(ExecutorServiceConfig.QUEUE_CAPACITY) int queueCapacity,
         @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
         ThreadProvider provider) {
         
         this.minPoolSize = minPoolSize;
-        this.maxPoolSize = maxPoolSize;
-        this.keepAliveTime = keepAliveTime;
-        this.keepAliveTimeUnit = Preconditions.checkNotNull(keepAliveTimeUnit, "KeepAliveTimeUnit");
-        this.queueMode = Preconditions.checkNotNull(queueMode, "QueueMode");
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
         Preconditions.checkNotNull(provider, "Provider");
         
-        this.executor = new ThreadPoolExecutor(
-                minPoolSize, maxPoolSize,
-                keepAliveTime, keepAliveTimeUnit,
-                queueCapacity == -1 ? queueMode.create() : queueMode.create(queueCapacity),
-                provider.newThreadFactory()
-        );
+        this.executor = new ScheduledThreadPoolExecutor(minPoolSize, provider.newThreadFactory());
     }
-    
+
     @Override
     public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
         return executor.awaitTermination(timeout, unit);
@@ -137,6 +97,26 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
     }
 
     @Override
+    public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+        return executor.schedule(callable, delay, unit);
+    }
+
+    @Override
+    public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+        return executor.schedule(command, delay, unit);
+    }
+
+    @Override
+    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+        return executor.scheduleAtFixedRate(command, initialDelay, period, unit);
+    }
+
+    @Override
+    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+        return executor.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+    }
+
+    @Override
     public void shutdown() {
         executor.shutdown();
     }
@@ -160,7 +140,7 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
     public Future<?> submit(Runnable task) {
         return executor.submit(task);
     }
-    
+
     @Override
     public void dispose() throws LifecycleException {
         try {
@@ -182,15 +162,11 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
 
     @Override
     public String toString() {
-        return String.format("ConfigurableExecutorService [" +
-            "minPoolSize=%s, maxPoolSize=%s, " +
-            "keepAliveTime=%s, keepAliveTimeUnit=%s, " +
-            "queueMode=%s, " +
-            "shutdownTimeout=%s, shutdownTimeoutUnit=%s]",
-            minPoolSize, maxPoolSize, 
-            keepAliveTime, keepAliveTimeUnit, 
-            queueMode, 
-            shutdownTimeout, shutdownTimeoutUnit);
+        return String.format(
+            "ConfigurableScheduledExecutorService [minPoolSize=%s, shutdownTimeout=%s, shutdownTimeoutUnit=%s]",
+            minPoolSize, shutdownTimeout, shutdownTimeoutUnit);
     }
+    
+    
     
 }
