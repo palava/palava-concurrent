@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Ordering;
 
+import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.core.lifecycle.Startable;
@@ -43,12 +44,12 @@ import de.cosmocode.palava.core.lifecycle.Suspendable;
  * Sub classes of {@link ScheduledService} are able get their {@link Runnable#run()}
  * method called in a configurable fixed rate.
  * 
- * TODO add testcase using easymock (scheduler) and expect accurate calculation results!
+ * TODO add testcases using easymock (scheduler) and expect accurate calculation results!
  * 
  * @author Willi Schoenborn
  */
 public abstract class ScheduledService implements Runnable, UncaughtExceptionHandler, 
-    Initializable, Startable, Suspendable {
+    Initializable, Startable, Suspendable, Disposable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledService.class);
 
@@ -86,32 +87,64 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         this.autostart = autostart;
     }
     
+    protected boolean isAutostart() {
+        return autostart;
+    }
+    
     protected void setMonth(int month) {
         this.month = month;
+    }
+    
+    protected int getMonth() {
+        return month;
     }
 
     protected void setWeek(int week) {
         this.week = week;
     }
     
+    protected int getWeek() {
+        return week;
+    }
+    
     protected void setDay(int day) {
         this.day = day;
     }
 
+    protected int getDay() {
+        return day;
+    }
+    
     protected void setHour(int hour) {
         this.hour = hour;
     }
 
+    protected int getHour() {
+        return hour;
+    }
+    
     protected void setMinute(int minute) {
         this.minute = minute;
+    }
+    
+    protected int getMinute() {
+        return minute;
     }
     
     protected void setPeriod(long period) {
         this.period = period;
     }
     
+    protected long getPeriod() {
+        return period;
+    }
+    
     protected void setPeriodUnit(TimeUnit periodUnit) {
         this.periodUnit = periodUnit;
+    }
+    
+    protected TimeUnit getPeriodUnit() {
+        return periodUnit;
     }
     
     @Override
@@ -119,6 +152,8 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         if (autostart) {
             LOG.info("Autostarting {}", this);
             start();
+        } else {
+            LOG.info("Autostart for {} has been disabled", this);
         }
     }
     
@@ -241,6 +276,11 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
             LOG.debug("{} canceled", future);
             future = null;
         }
+    }
+    
+    @Override
+    public void dispose() throws LifecycleException {
+        stop();
     }
     
 }
