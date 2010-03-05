@@ -159,6 +159,9 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
     
     @Override
     public void start() throws LifecycleException {
+        LOG.info("Checking for running/scheduled task");
+        stop();
+        
         final Calendar calendar = Calendar.getInstance();
         
         if (month >= Calendar.JANUARY) {
