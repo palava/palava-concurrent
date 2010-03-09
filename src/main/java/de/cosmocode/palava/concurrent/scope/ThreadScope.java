@@ -56,6 +56,7 @@ public final class ThreadScope implements Scope, Runnable, Initializable {
     @Override
     public void initialize() throws LifecycleException {
         LOG.info("Scheduling thread scope cleanup to run every {} {}", period, periodUnit.name().toLowerCase());
+        // TODO handle returned future
         scheduler.scheduleAtFixedRate(this, 0, period, periodUnit);
     }
     

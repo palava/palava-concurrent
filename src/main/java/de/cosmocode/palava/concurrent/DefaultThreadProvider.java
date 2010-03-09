@@ -19,6 +19,7 @@
 
 package de.cosmocode.palava.concurrent;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -83,7 +84,7 @@ final class DefaultThreadProvider implements ThreadProvider {
      * @author Oliver Lorenz
      * @author Willi Schoenborn
      */
-    private class Factory implements ThreadFactory {
+    private class Factory implements ThreadFactory, UncaughtExceptionHandler {
         
         private final ThreadFactory factory;
         
@@ -94,9 +95,29 @@ final class DefaultThreadProvider implements ThreadProvider {
         @Override
         public Thread newThread(Runnable runnable) {
             final Thread thread = factory.newThread(runnable);
+            final UncaughtExceptionHandler original = thread.getUncaughtExceptionHandler();
+            if (original == null) {
+                thread.setUncaughtExceptionHandler(this);
+            } else {
+                thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+                    
+                    @Override
+                    public void uncaughtException(Thread t, Throwable e) {
+                        Factory.this.uncaughtException(t, e);
+                        original.uncaughtException(t, e);
+                    }
+                    
+                });
+            }
             threads.add(thread);
             LOG.trace("New thread {}, {} thread(s) currently in use", thread, threadSize);
             return thread;
+        }
+        
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            LOG.error("Uncaught exception in thread " + t, e);
+            
         }
         
     }
