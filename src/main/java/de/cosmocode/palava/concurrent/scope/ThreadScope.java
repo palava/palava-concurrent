@@ -62,7 +62,6 @@ public final class ThreadScope implements Scope, Runnable, Initializable {
     
     @Override
     public void run() {
-        LOG.trace("Cleaning up thread scope");
         final Iterator<Thread> iterator = contexts.keySet().iterator();
         while (iterator.hasNext()) {
             final Thread thread = iterator.next();
