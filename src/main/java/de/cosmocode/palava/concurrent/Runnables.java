@@ -19,8 +19,7 @@
 
 package de.cosmocode.palava.concurrent;
 
-import java.util.Arrays;
-
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 /**
@@ -30,6 +29,8 @@ import com.google.common.base.Preconditions;
  */
 public final class Runnables {
 
+    private static final Joiner JOINER = Joiner.on(", ");
+    
     /**
      * 
      * @param first
@@ -55,7 +56,7 @@ public final class Runnables {
             
             @Override
             public String toString() {
-                return String.format("Runnables.chain(%s, %s, %s)", first, second, Arrays.asList(rest));
+                return String.format("Runnables.chain(%s, %s, %s)", first, second, JOINER.join(rest));
             }
             
         };

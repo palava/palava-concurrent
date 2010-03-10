@@ -60,7 +60,7 @@ public class ExecutorModule extends PrivateModule {
     public final void configure() {
         LOG.trace("Binding executor configuration for {} using name {}", key, name);
         
-        final ExecutorConfig config = ExecutorConfigs.named(name);
+        final ExecutorConfig config = ExecutorConfig.named(name);
 
         bind(int.class).annotatedWith(Names.named(ExecutorServiceConfig.MIN_POOL_SIZE)).to(
             Key.get(int.class, Names.named(config.minPoolSize())));

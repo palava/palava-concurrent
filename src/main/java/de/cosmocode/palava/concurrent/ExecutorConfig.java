@@ -30,13 +30,26 @@ import com.google.common.base.Preconditions;
  */
 public final class ExecutorConfig {
     
-    public static final String BASE_PREFIX = ExecutorConfigs.PREFIX + "named.";
+    public static final String PREFIX = "executors.named.";
 
     private final String prefix;
 
     ExecutorConfig(String name) {
         Preconditions.checkNotNull(name, "Name");
-        this.prefix = BASE_PREFIX + name + ".";
+        this.prefix = PREFIX + name + ".";
+    }
+
+    /**
+     * Create an {@link ExecutorConfig} using the given name.
+     * 
+     * @param name the configured name
+     * @throws NullPointerException if name is null
+     * @return an {@link ExecutorConfig} which uses the given name to
+     *         create named config keys
+     */
+    public static ExecutorConfig named(String name) {
+        Preconditions.checkNotNull(name, "Name");
+        return new ExecutorConfig(name);
     }
 
     /**

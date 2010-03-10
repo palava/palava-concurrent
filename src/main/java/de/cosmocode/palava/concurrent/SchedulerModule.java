@@ -62,7 +62,7 @@ public final class SchedulerModule extends PrivateModule {
     protected void configure() {
         LOG.trace("Binding scheduler configuration for {} using name {}", key, name);
         
-        final ExecutorConfig config = ExecutorConfigs.named(name);
+        final ExecutorConfig config = ExecutorConfig.named(name);
 
         bind(int.class).annotatedWith(Names.named(ExecutorServiceConfig.MIN_POOL_SIZE)).to(
             Key.get(int.class, Names.named(config.minPoolSize())));

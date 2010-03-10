@@ -20,7 +20,7 @@
 package de.cosmocode.palava.concurrent;
 
 /**
- * 
+ * Static holder class for constant config key names.
  *
  * @author Willi Schoenborn
  */
