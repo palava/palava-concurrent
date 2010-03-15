@@ -25,8 +25,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -74,7 +74,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
     
     private TimeUnit periodUnit = TimeUnit.MILLISECONDS;
     
-    private Future<?> future;
+    private ScheduledFuture<?> future;
     
     /**
      * Provides the underlying {@link ScheduledExecutorService}.
