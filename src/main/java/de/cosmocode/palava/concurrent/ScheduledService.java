@@ -29,6 +29,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,110 +45,118 @@ import de.cosmocode.palava.core.lifecycle.Suspendable;
 /**
  * Sub classes of {@link ScheduledService} are able get their {@link Runnable#run()}
  * method called in a configurable fixed rate.
- * 
+ *
  * TODO add testcases using easymock (scheduler) and expect accurate calculation results!
- * 
+ *
  * @author Willi Schoenborn
  */
-public abstract class ScheduledService implements Runnable, UncaughtExceptionHandler, 
+public abstract class ScheduledService implements Runnable, UncaughtExceptionHandler,
     Initializable, Startable, Suspendable, Disposable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledService.class);
 
     private boolean autostart;
-    
+
     // month of year
     private int month = -1;
 
     // week of month
     private int week = -1;
-    
+
     // day of week
     private int day = -1;
 
     // hour of day
     private int hour = -1;
-    
+
     // minute of hour
     private int minute;
-    
+
     private long period;
-    
+
     private TimeUnit periodUnit = TimeUnit.MILLISECONDS;
-    
+
     private ScheduledFuture<?> future;
-    
+
     /**
      * Provides the underlying {@link ScheduledExecutorService}.
-     * 
+     *
      * @return the scheduler this service uses for scheduling purposes
      */
     protected abstract ScheduledExecutorService getScheduler();
 
-    protected void setAutostart(boolean autostart) {
+    @Inject(optional = true)
+    protected void setAutostart(@Named(ScheduledServiceConfig.AUTOSTART) boolean autostart) {
         this.autostart = autostart;
     }
-    
+
     protected boolean isAutostart() {
         return autostart;
     }
-    
-    protected void setMonth(int month) {
+
+    @Inject(optional = true)
+    protected void setMonth(@Named(ScheduledServiceConfig.MONTH) int month) {
         this.month = month;
     }
-    
+
     protected int getMonth() {
         return month;
     }
 
-    protected void setWeek(int week) {
+    @Inject(optional = true)
+    protected void setWeek(@Named(ScheduledServiceConfig.WEEK) int week) {
         this.week = week;
     }
-    
+
     protected int getWeek() {
         return week;
     }
-    
-    protected void setDay(int day) {
+
+    @Inject(optional = true)
+    protected void setDay(@Named(ScheduledServiceConfig.DAY) int day) {
         this.day = day;
     }
 
     protected int getDay() {
         return day;
     }
-    
-    protected void setHour(int hour) {
+
+    @Inject(optional = true)
+    protected void setHour(@Named(ScheduledServiceConfig.HOUR) int hour) {
         this.hour = hour;
     }
 
     protected int getHour() {
         return hour;
     }
-    
-    protected void setMinute(int minute) {
+
+    @Inject(optional = true)
+    protected void setMinute(@Named(ScheduledServiceConfig.MINUTE) int minute) {
         this.minute = minute;
     }
-    
+
     protected int getMinute() {
         return minute;
     }
-    
-    protected void setPeriod(long period) {
+
+    @Inject(optional = true)
+    protected void setPeriod(@Named(ScheduledServiceConfig.PERIOD) long period) {
         this.period = period;
     }
-    
+
     protected long getPeriod() {
         return period;
     }
-    
-    protected void setPeriodUnit(TimeUnit periodUnit) {
+
+    @Inject(optional = true)
+    protected void setPeriodUnit(@Named(ScheduledServiceConfig.PERIOD_UNIT) TimeUnit periodUnit) {
         this.periodUnit = periodUnit;
     }
-    
+
     protected TimeUnit getPeriodUnit() {
         return periodUnit;
     }
-    
+
     @Override
     public void initialize() throws LifecycleException {
         if (autostart) {
@@ -156,46 +166,46 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
             LOG.info("Autostart for {} has been disabled", this);
         }
     }
-    
+
     @Override
     public void start() throws LifecycleException {
         LOG.info("Checking for running/scheduled task");
         stop();
-        
+
         final Calendar calendar = Calendar.getInstance();
-        
+
         if (month >= Calendar.JANUARY) {
             // month in calendar start with 0, but we use 1
             final int m = month - 1;
             LOG.debug("Setting month to {}", m);
             calendar.set(Calendar.MONTH, m);
         }
-        
+
         if (week >= 0) {
             LOG.debug("Setting week to {}", week);
             calendar.set(Calendar.WEEK_OF_MONTH, week);
         }
-        
+
         if (day >= Calendar.SUNDAY) {
             // first day of week in calendar is sunday, but we use monday
             final int d = (day % 7) + 1;
             LOG.debug("Setting day to {}", d);
             calendar.set(Calendar.DAY_OF_WEEK, d);
         }
-        
+
         if (hour >= 0) {
             calendar.set(Calendar.HOUR_OF_DAY, hour);
         }
-        
+
         calendar.set(Calendar.MINUTE, minute);
         calendar.set(Calendar.SECOND, 0);
 
         final Date start = calendar.getTime();
         final Date now = new Date();
-        
+
         // initial delay in milliseconds
         final long delay;
-        
+
         if (start.before(now)) {
             LOG.debug("Point already passed.");
             if (month >= Calendar.JANUARY) {
@@ -214,23 +224,23 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
             LOG.debug("Point not yet passed.");
             delay = start.getTime() - now.getTime();
         }
-        
+
         final TimeUnit unit = getHumanTimeUnit(delay);
         LOG.info("Scheduling {} to get executed in {} {} and then periodically every {} {}", new Object[] {
             getClass().getSimpleName(),
             unit.convert(delay, TimeUnit.MILLISECONDS), unit.name().toLowerCase(),
             period, periodUnit.name().toLowerCase(),
         });
-        
+
         future = getScheduler().scheduleAtFixedRate(
-            this, 
-            delay, 
-            periodUnit.toMillis(period), 
+            this,
+            delay,
+            periodUnit.toMillis(period),
             TimeUnit.MILLISECONDS
         );
-        
+
         getScheduler().execute(new Runnable() {
-            
+
             @Override
             public void run() {
                 LOG.debug("Starting watcher thread");
@@ -246,10 +256,10 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
                 }
                 LOG.debug("Watcher thread terminated");
             }
-            
+
         });
     }
-    
+
     private TimeUnit getHumanTimeUnit(long delay) {
         final Ordering<TimeUnit> ordering = Ordering.natural().reverse();
         for (TimeUnit unit : ordering.sortedCopy(Arrays.asList(TimeUnit.values()))) {
@@ -259,17 +269,17 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         }
         return TimeUnit.MILLISECONDS;
     }
-    
+
     @Override
     public void suspend() throws LifecycleException {
         stop();
     }
-    
+
     @Override
     public void resume() throws LifecycleException {
         start();
     }
-    
+
     @Override
     public void stop() throws LifecycleException {
         if (future == null) {
@@ -280,10 +290,10 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
             future = null;
         }
     }
-    
+
     @Override
     public void dispose() throws LifecycleException {
         stop();
     }
-    
+
 }
