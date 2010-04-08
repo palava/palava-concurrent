@@ -29,8 +29,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +45,8 @@ import de.cosmocode.palava.core.lifecycle.Suspendable;
  * method called in a configurable fixed rate.
  *
  * TODO add testcases using easymock (scheduler) and expect accurate calculation results!
+ * TODO use joda-time and human-friendly periods instead of durations in milliseconds
+ * TODO re-schedule after every execution instead of scheduling at fixed rate
  *
  * @author Willi Schoenborn
  */
@@ -85,8 +85,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
      */
     protected abstract ScheduledExecutorService getScheduler();
 
-    @Inject(optional = true)
-    protected void setAutostart(@Named(ScheduledServiceConfig.AUTOSTART) boolean autostart) {
+    protected void setAutostart(boolean autostart) {
         this.autostart = autostart;
     }
 
@@ -94,8 +93,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return autostart;
     }
 
-    @Inject(optional = true)
-    protected void setMonth(@Named(ScheduledServiceConfig.MONTH) int month) {
+    protected void setMonth(int month) {
         this.month = month;
     }
 
@@ -103,8 +101,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return month;
     }
 
-    @Inject(optional = true)
-    protected void setWeek(@Named(ScheduledServiceConfig.WEEK) int week) {
+    protected void setWeek(int week) {
         this.week = week;
     }
 
@@ -112,8 +109,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return week;
     }
 
-    @Inject(optional = true)
-    protected void setDay(@Named(ScheduledServiceConfig.DAY) int day) {
+    protected void setDay(int day) {
         this.day = day;
     }
 
@@ -121,8 +117,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return day;
     }
 
-    @Inject(optional = true)
-    protected void setHour(@Named(ScheduledServiceConfig.HOUR) int hour) {
+    protected void setHour(int hour) {
         this.hour = hour;
     }
 
@@ -130,8 +125,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return hour;
     }
 
-    @Inject(optional = true)
-    protected void setMinute(@Named(ScheduledServiceConfig.MINUTE) int minute) {
+    protected void setMinute(int minute) {
         this.minute = minute;
     }
 
@@ -139,8 +133,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return minute;
     }
 
-    @Inject(optional = true)
-    protected void setPeriod(@Named(ScheduledServiceConfig.PERIOD) long period) {
+    protected void setPeriod(long period) {
         this.period = period;
     }
 
@@ -148,8 +141,7 @@ public abstract class ScheduledService implements Runnable, UncaughtExceptionHan
         return period;
     }
 
-    @Inject(optional = true)
-    protected void setPeriodUnit(@Named(ScheduledServiceConfig.PERIOD_UNIT) TimeUnit periodUnit) {
+    protected void setPeriodUnit(TimeUnit periodUnit) {
         this.periodUnit = periodUnit;
     }
 
