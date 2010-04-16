@@ -34,7 +34,7 @@ public final class ConcurrencyModule implements Module {
     public void configure(Binder binder) {
         binder.bind(ExecutorServiceBuilder.class).to(DefaultExecutorServiceBuilder.class).in(Singleton.class);
         binder.bind(ExecutorServiceFactory.class).to(DefaultExecutorServiceFactory.class).in(Singleton.class);
-        binder.bind(ThreadProvider.class).to(DefaultThreadProvider.class).in(Singleton.class);
+        binder.install(new DefaultThreadProviderModule());
     }
 
 }

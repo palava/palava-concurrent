@@ -35,8 +35,8 @@ import com.google.inject.BindingAnnotation;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({
-    ElementType.PARAMETER,
-    ElementType.METHOD
+    ElementType.METHOD,
+    ElementType.PARAMETER
 })
 @BindingAnnotation
 public @interface BackgroundNotifier {

@@ -32,11 +32,11 @@ import com.google.inject.BindingAnnotation;
  *
  * @author Willi Schoenborn
  */
+@Retention(RetentionPolicy.RUNTIME)
 @Target({
     ElementType.PARAMETER,
-    ElementType.FIELD
+    ElementType.METHOD
 })
-@Retention(RetentionPolicy.RUNTIME)
 @BindingAnnotation
 public @interface BackgroundScheduler {
 
