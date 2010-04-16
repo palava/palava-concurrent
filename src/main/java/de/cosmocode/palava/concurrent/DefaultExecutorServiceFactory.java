@@ -40,7 +40,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import de.cosmocode.palava.core.Settings;
+import de.cosmocode.palava.core.inject.Settings;
 
 /**
  * Can parse ExecutorService configurations from the framework's settings
