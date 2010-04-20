@@ -22,7 +22,7 @@ package de.cosmocode.palava.concurrent;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 
-import de.cosmocode.palava.core.RegistryModule;
+import de.cosmocode.palava.core.DefaultRegistryModule;
 
 /**
  * Test application for the concurrency test.
@@ -33,7 +33,7 @@ public class ConcurrentTestApplication implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.install(new RegistryModule());
+        binder.install(new DefaultRegistryModule());
         binder.install(new ConcurrencyModule());
     }
     
