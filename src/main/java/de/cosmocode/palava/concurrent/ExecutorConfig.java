@@ -1,20 +1,17 @@
 /**
- * palava - a java-php-bridge
- * Copyright (C) 2007-2010  CosmoCode GmbH
+ * Copyright 2010 CosmoCode GmbH
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package de.cosmocode.palava.concurrent;
@@ -53,34 +50,12 @@ public final class ExecutorConfig {
     }
 
     /**
-     * Create a prefixed config key for minSize.
-     * 
-     * @deprecated use {@link ExecutorConfig#minPoolSize()} instead
-     * @return the prefixed minSize config key
-     */
-    @Deprecated
-    public String minSize() {
-        return prefix + "minSize";
-    }
-    
-    /**
      * Create a prefixed config key for minPoolSize.
      * 
      * @return the prefixed minPoolSize config key
      */
     public String minPoolSize() {
         return prefix + ExecutorServiceConfig.MIN_POOL_SIZE;
-    }
-
-    /**
-     * Create a prefixed config key for maxSize.
-     * 
-     * @deprecated use {@link ExecutorConfig#maxPoolSize()} instead
-     * @return the prefixed maxSize config key
-     */
-    @Deprecated
-    public String maxSize() {
-        return prefix + "maxSize";
     }
 
     /**
@@ -111,34 +86,12 @@ public final class ExecutorConfig {
     }
 
     /**
-     * Create a prefixed config key for queue.
-     * 
-     * @deprecated use {@link ExecutorConfig#queueMode()} instead
-     * @return the prefixed queue config key
-     */
-    @Deprecated
-    public String queue() {
-        return prefix + "queue";
-    }
-    
-    /**
      * Create a prefixed config key for queueMode.
      * 
      * @return the prefixed queueMode config key
      */
     public String queueMode() {
         return prefix + ExecutorServiceConfig.QUEUE_MODE;
-    }
-
-    /**
-     * Create a prefixed config key for queueMax.
-     * 
-     * @deprecated use {@link ExecutorConfig#queueCapacity()} instead
-     * @return the prefixed queueMax config key
-     */
-    @Deprecated
-    public String queueMax() {
-        return prefix + "queueMax";
     }
 
     /**
