@@ -76,7 +76,7 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
         ThreadFactory factory) {
         
         this.minPoolSize = minPoolSize;
-        this.maxPoolSize = maxPoolSize;
+        this.maxPoolSize = maxPoolSize == -1 ? Integer.MAX_VALUE : maxPoolSize;
         this.keepAliveTime = keepAliveTime;
         this.keepAliveTimeUnit = Preconditions.checkNotNull(keepAliveTimeUnit, "KeepAliveTimeUnit");
         this.queueMode = Preconditions.checkNotNull(queueMode, "QueueMode");
