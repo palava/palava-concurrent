@@ -24,6 +24,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -60,14 +61,14 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
         @Named(ExecutorServiceConfig.MIN_POOL_SIZE) int minPoolSize,
         @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
-        ThreadProvider provider) {
+        ThreadFactory factory) {
         
         this.minPoolSize = minPoolSize;
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
-        Preconditions.checkNotNull(provider, "Provider");
+        Preconditions.checkNotNull(factory, "Factory");
         
-        this.executor = new ScheduledThreadPoolExecutor(minPoolSize, provider.newThreadFactory());
+        this.executor = new ScheduledThreadPoolExecutor(minPoolSize, factory);
     }
 
     @Override

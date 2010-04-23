@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -72,7 +73,7 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
         @Named(ExecutorServiceConfig.QUEUE_CAPACITY) int queueCapacity,
         @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
-        ThreadProvider provider) {
+        ThreadFactory factory) {
         
         this.minPoolSize = minPoolSize;
         this.maxPoolSize = maxPoolSize;
@@ -81,13 +82,13 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
         this.queueMode = Preconditions.checkNotNull(queueMode, "QueueMode");
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
-        Preconditions.checkNotNull(provider, "Provider");
+        Preconditions.checkNotNull(factory, "Factory");
         
         this.executor = new ThreadPoolExecutor(
             minPoolSize, maxPoolSize,
             keepAliveTime, keepAliveTimeUnit,
             queueCapacity == -1 ? queueMode.create() : queueMode.create(queueCapacity),
-            provider.newThreadFactory()
+            factory
         );
     }
     
