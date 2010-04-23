@@ -31,6 +31,10 @@ import de.cosmocode.patterns.Factory;
  */
 public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
 
+    /**
+     * A queue mode which produces {@link LinkedBlockingQueue}s.
+     * This mode supports capacity configuration.
+     */
     BLOCKING {
         
         @Override
@@ -45,11 +49,15 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         
     },
     
+    /**
+     * A queue mode which produces {@link ArrayBlockingQueue}s.
+     * This mode <strong>requires</strong> capacity configuration.
+     */
     STATIC {
         
         @Override
         public BlockingQueue<Runnable> create() {
-            throw new UnsupportedOperationException(name() + " needs a capacity");
+            throw new UnsupportedOperationException(name() + " requires a capacity");
         }
         
         @Override
@@ -59,6 +67,10 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         
     },
     
+    /**
+     * A queue mode which produces {@link SynchronousQueue}s.
+     * This mode does <strong>not</strong> allow capacity configuration.
+     */
     SYNCHRONOUS {
       
         @Override
@@ -72,7 +84,11 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         }
         
     },
-    
+
+    /**
+     * A queue mode which produces {@link PriorityBlockingQueue}s.
+     * This mode does <strong>not</strong> allow capacity configuration.
+     */
     PRIORITY {
         
         @Override
@@ -87,6 +103,10 @@ public enum QueueMode implements Factory<BlockingQueue<Runnable>> {
         
     };
     
+    /**
+     * {@inheritDoc}
+     * @throws UnsupportedOperationException if this mode requires a capacity
+     */
     @Override
     public abstract BlockingQueue<Runnable> create();
     
