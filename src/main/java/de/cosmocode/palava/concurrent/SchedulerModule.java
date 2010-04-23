@@ -43,6 +43,17 @@ public final class SchedulerModule extends PrivateModule {
     
     private final String name;
     
+    /**
+     * Creates a new {@link SchedulerModule} which uses the given name to rebind configuration
+     * entries and binds the configured {@link ScheduledExecutorService} using {@link Names#named(String)}.
+     * 
+     * @since 2.2
+     * @param name the desired name
+     */
+    public SchedulerModule(String name) {
+        this(Names.named(name), name);
+    }
+    
     public SchedulerModule(Class<? extends Annotation> annotation, String name) {
         Preconditions.checkNotNull(annotation, "Annotation");
         this.key = Key.get(ScheduledExecutorService.class, annotation);
