@@ -53,7 +53,7 @@ final class DefaultThreadProvider implements ThreadProvider {
     };
     
     public DefaultThreadProvider() {
-        final MapMaker maker = new MapMaker().softKeys();
+        final MapMaker maker = new MapMaker().weakKeys();
         final Map<Thread, Boolean> map = maker.makeMap();
         this.threads = Collections.newSetFromMap(map);
     }
