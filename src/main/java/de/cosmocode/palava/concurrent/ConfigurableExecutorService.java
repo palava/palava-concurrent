@@ -85,8 +85,8 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
         Preconditions.checkNotNull(factory, "Factory");
         
         this.executor = new ThreadPoolExecutor(
-            minPoolSize, maxPoolSize,
-            keepAliveTime, keepAliveTimeUnit,
+            this.minPoolSize, this.maxPoolSize,
+            this.keepAliveTime, this.keepAliveTimeUnit,
             queueCapacity == -1 ? queueMode.create() : queueMode.create(queueCapacity),
             factory
         );
