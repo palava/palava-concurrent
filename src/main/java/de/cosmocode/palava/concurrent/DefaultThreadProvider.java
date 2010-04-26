@@ -18,7 +18,6 @@ package de.cosmocode.palava.concurrent;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -53,9 +52,7 @@ final class DefaultThreadProvider implements ThreadProvider {
     };
     
     public DefaultThreadProvider() {
-        final MapMaker maker = new MapMaker().weakKeys();
-        final Map<Thread, Boolean> map = maker.makeMap();
-        this.threads = Collections.newSetFromMap(map);
+        this.threads = Collections.newSetFromMap(new MapMaker().weakKeys().<Thread, Boolean>makeMap());
     }
 
     @Override
