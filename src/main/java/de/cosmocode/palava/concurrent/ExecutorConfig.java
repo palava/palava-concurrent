@@ -26,12 +26,32 @@ import com.google.common.base.Preconditions;
  * @author Willi Schoenborn
  */
 public final class ExecutorConfig {
+
+    static final String MIN_POOL_SIZE = "minPoolSize";
     
-    public static final String PREFIX = "executors.named.";
+    static final String MAX_POOL_SIZE = "maxPoolSize";
+    
+    static final String KEEP_ALIVE_TIME = "keepAliveTime";
+    
+    static final String KEEP_ALIVE_TIME_UNIT = "keepAliveTimeUnit";
+    
+    static final String QUEUE_MODE = "queueMode";
+    
+    static final String QUEUE_CAPACITY = "queueCapacity";
+    
+    static final String THREAD_FACTORY = "threadFactory";
+    
+    static final String REJECTION_HANDLER = "rejectionHandler";
+    
+    static final String SHUTDOWN_TIMEOUT = "shutdownTimeout";
+    
+    static final String SHUTDOWN_TIMEOUT_UNIT = "shutdownTimeoutUnit";
+    
+    private static final String PREFIX = "executors.named.";
 
     private final String prefix;
 
-    ExecutorConfig(String name) {
+    private ExecutorConfig(String name) {
         Preconditions.checkNotNull(name, "Name");
         this.prefix = PREFIX + name + ".";
     }
@@ -55,7 +75,7 @@ public final class ExecutorConfig {
      * @return the prefixed minPoolSize config key
      */
     public String minPoolSize() {
-        return prefix + ExecutorServiceConfig.MIN_POOL_SIZE;
+        return prefix + MIN_POOL_SIZE;
     }
 
     /**
@@ -64,7 +84,7 @@ public final class ExecutorConfig {
      * @return the prefixed maxPoolSize config key
      */
     public String maxPoolSize() {
-        return prefix + ExecutorServiceConfig.MAX_POOL_SIZE;
+        return prefix + MAX_POOL_SIZE;
     }
 
     /**
@@ -73,7 +93,7 @@ public final class ExecutorConfig {
      * @return the prefixed keepAliveTime config key
      */
     public String keepAliveTime() {
-        return prefix + ExecutorServiceConfig.KEEP_ALIVE_TIME;
+        return prefix + KEEP_ALIVE_TIME;
     }
 
     /**
@@ -82,7 +102,7 @@ public final class ExecutorConfig {
      * @return the prefixed keepAliveTimeUnit config key
      */
     public String keepAliveTimeUnit() {
-        return prefix + ExecutorServiceConfig.KEEP_ALIVE_TIME_UNIT;
+        return prefix + KEEP_ALIVE_TIME_UNIT;
     }
 
     /**
@@ -91,7 +111,7 @@ public final class ExecutorConfig {
      * @return the prefixed queueMode config key
      */
     public String queueMode() {
-        return prefix + ExecutorServiceConfig.QUEUE_MODE;
+        return prefix + QUEUE_MODE;
     }
 
     /**
@@ -100,7 +120,25 @@ public final class ExecutorConfig {
      * @return the prefixed queueCapacity config key
      */
     public String queueCapacity() {
-        return prefix + ExecutorServiceConfig.QUEUE_CAPACITY;
+        return prefix + QUEUE_CAPACITY;
+    }
+    
+    /**
+     * Creates a prefixed config key for {@link #THREAD_FACTORY}.
+     * 
+     * @return the prefixed threadFactory config key
+     */
+    public String threadFactory() {
+        return prefix + THREAD_FACTORY;
+    }
+    
+    /**
+     * Creates a prefix config key for {@link #REJECTION_HANDLER}.
+     * 
+     * @return the prefixed rejectionHandler config key
+     */
+    public String rejectionHandler() {
+        return prefix + REJECTION_HANDLER;
     }
     
     /**
@@ -109,7 +147,7 @@ public final class ExecutorConfig {
      * @return the prefixed shutdownTimeout config key
      */
     public String shutdownTimeout() {
-        return prefix + ExecutorServiceConfig.SHUTDOWN_TIMEOUT;
+        return prefix + SHUTDOWN_TIMEOUT;
     }
 
     /**
@@ -118,7 +156,7 @@ public final class ExecutorConfig {
      * @return the prefixed shutdownTimeoutUnit config key
      */
     public String shutdownTimeoutUnit() {
-        return prefix + ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT;
+        return prefix + SHUTDOWN_TIMEOUT_UNIT;
     }
     
 }

@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +36,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
@@ -43,7 +45,7 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  *
  * @author Willi Schoenborn
  */
-final class ConfigurableExecutorService implements ExecutorService, Disposable {
+final class ConfigurableExecutorService implements ExecutorService, Initializable, Disposable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableExecutorService.class);
     
@@ -57,38 +59,58 @@ final class ConfigurableExecutorService implements ExecutorService, Disposable {
     
     private final QueueMode queueMode;
     
+    private final int queueCapacity;
+    
+    private ThreadFactory factory;
+    
+    private RejectedExecutionHandler handler = new ThreadPoolExecutor.AbortPolicy();
+    
     private final long shutdownTimeout;
     
     private final TimeUnit shutdownTimeoutUnit;
     
-    private final ExecutorService executor;
+    private ExecutorService executor;
     
     @Inject
     public ConfigurableExecutorService(
-        @Named(ExecutorServiceConfig.MIN_POOL_SIZE) int minPoolSize,
-        @Named(ExecutorServiceConfig.MAX_POOL_SIZE) int maxPoolSize,
-        @Named(ExecutorServiceConfig.KEEP_ALIVE_TIME) long keepAliveTime,
-        @Named(ExecutorServiceConfig.KEEP_ALIVE_TIME_UNIT) TimeUnit keepAliveTimeUnit,
-        @Named(ExecutorServiceConfig.QUEUE_MODE) QueueMode queueMode,
-        @Named(ExecutorServiceConfig.QUEUE_CAPACITY) int queueCapacity,
-        @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
-        @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
-        ThreadFactory factory) {
+        @Named(ExecutorConfig.MIN_POOL_SIZE) int minPoolSize,
+        @Named(ExecutorConfig.MAX_POOL_SIZE) int maxPoolSize,
+        @Named(ExecutorConfig.KEEP_ALIVE_TIME) long keepAliveTime,
+        @Named(ExecutorConfig.KEEP_ALIVE_TIME_UNIT) TimeUnit keepAliveTimeUnit,
+        @Named(ExecutorConfig.QUEUE_MODE) QueueMode queueMode,
+        @Named(ExecutorConfig.QUEUE_CAPACITY) int queueCapacity,
+        ThreadFactory defaultFactory,
+        @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
+        @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit) {
         
         this.minPoolSize = minPoolSize;
         this.maxPoolSize = maxPoolSize == -1 ? Integer.MAX_VALUE : maxPoolSize;
         this.keepAliveTime = keepAliveTime;
         this.keepAliveTimeUnit = Preconditions.checkNotNull(keepAliveTimeUnit, "KeepAliveTimeUnit");
         this.queueMode = Preconditions.checkNotNull(queueMode, "QueueMode");
+        this.queueCapacity = queueCapacity;
+        this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
-        Preconditions.checkNotNull(factory, "Factory");
-        
-        this.executor = new ThreadPoolExecutor(
-            this.minPoolSize, this.maxPoolSize,
-            this.keepAliveTime, this.keepAliveTimeUnit,
+    }
+    
+    @Inject(optional = true)
+    void setFactory(@Named(ExecutorConfig.THREAD_FACTORY) ThreadFactory factory) {
+        this.factory = Preconditions.checkNotNull(factory, "Factory");
+    }
+    
+    @Inject(optional = true)
+    void setHandler(@Named(ExecutorConfig.REJECTION_HANDLER) RejectedExecutionHandler handler) {
+        this.handler = Preconditions.checkNotNull(handler, "Handler");
+    }
+    
+    @Override
+    public void initialize() throws LifecycleException {
+        executor = new ThreadPoolExecutor(
+            minPoolSize, maxPoolSize,
+            keepAliveTime, keepAliveTimeUnit,
             queueCapacity == -1 ? queueMode.create() : queueMode.create(queueCapacity),
-            factory
+            factory, handler
         );
     }
     

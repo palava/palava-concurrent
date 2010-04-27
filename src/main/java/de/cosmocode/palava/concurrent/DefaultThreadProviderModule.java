@@ -23,7 +23,8 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 
 /**
- * Binds {@link ThreadProvider} to {@link DefaultThreadProvider}.
+ * Binds {@link ThreadProvider} to {@link DefaultThreadProvider} and
+ * {@link ThreadFactory} to {@link ThreadProvider}.
  *
  * @author Willi Schoenborn
  */

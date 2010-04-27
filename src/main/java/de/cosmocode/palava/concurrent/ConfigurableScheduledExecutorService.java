@@ -21,10 +21,12 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -36,6 +38,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
@@ -44,33 +47,50 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  *
  * @author Willi Schoenborn
  */
-final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Disposable {
+final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Initializable, Disposable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableScheduledExecutorService.class);
     
     private final int minPoolSize;
     
+    private ThreadFactory factory;
+    
+    private RejectedExecutionHandler handler = new ThreadPoolExecutor.AbortPolicy();
+    
     private final long shutdownTimeout;
     
     private final TimeUnit shutdownTimeoutUnit;
 
-    private final ScheduledExecutorService executor;
+    private ScheduledExecutorService executor;
     
     @Inject
     public ConfigurableScheduledExecutorService(
-        @Named(ExecutorServiceConfig.MIN_POOL_SIZE) int minPoolSize,
-        @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
-        @Named(ExecutorServiceConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
-        ThreadFactory factory) {
+        @Named(ExecutorConfig.MIN_POOL_SIZE) int minPoolSize,
+        @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
+        @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
+        ThreadFactory defaultFactory) {
         
         this.minPoolSize = minPoolSize;
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
-        Preconditions.checkNotNull(factory, "Factory");
-        
-        this.executor = new ScheduledThreadPoolExecutor(minPoolSize, factory);
+        this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
     }
-
+    
+    @Inject(optional = true)
+    void setFactory(@Named(ExecutorConfig.THREAD_FACTORY) ThreadFactory factory) {
+        this.factory = Preconditions.checkNotNull(factory, "Factory");
+    }
+    
+    @Inject(optional = true)
+    void setHandler(@Named(ExecutorConfig.REJECTION_HANDLER) RejectedExecutionHandler handler) {
+        this.handler = Preconditions.checkNotNull(handler, "Handler");
+    }
+    
+    @Override
+    public void initialize() throws LifecycleException {
+        this.executor = new ScheduledThreadPoolExecutor(minPoolSize, factory, handler);
+    }
+    
     @Override
     public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
         return executor.awaitTermination(timeout, unit);
@@ -183,7 +203,5 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
             "ConfigurableScheduledExecutorService [minPoolSize=%s, shutdownTimeout=%s, shutdownTimeoutUnit=%s]",
             minPoolSize, shutdownTimeout, shutdownTimeoutUnit);
     }
-    
-    
     
 }
