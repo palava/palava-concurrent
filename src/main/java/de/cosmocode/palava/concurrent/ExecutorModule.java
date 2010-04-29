@@ -74,7 +74,10 @@ public class ExecutorModule extends AbstractRebindingModule {
     @Override
     protected void configuration() {
         LOG.trace("Binding executor configuration for {} using name {}", key, name);
-        
+
+        bind(String.class).annotatedWith(Names.named(ExecutorConfig.NAME)).to(
+            Key.get(String.class, Names.named(config.name())));
+
         bind(int.class).annotatedWith(Names.named(ExecutorConfig.MIN_POOL_SIZE)).to(
             Key.get(int.class, Names.named(config.minPoolSize())));
         

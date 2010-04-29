@@ -39,16 +39,20 @@ import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
+import javax.management.*;
+
 /**
  * An {@link ExecutorService} which can be easily configured using
  * the constructor.
  *
  * @author Willi Schoenborn
  */
-final class ConfigurableExecutorService implements ExecutorService, Initializable, Disposable {
+final class ConfigurableExecutorService implements ExecutorService, Initializable, Disposable, ConfigurableExecutorServiceMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableExecutorService.class);
-    
+
+    private String name;
+
     private final int minPoolSize;
     
     private final int maxPoolSize;
@@ -69,10 +73,13 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     
     private final TimeUnit shutdownTimeoutUnit;
     
-    private ExecutorService executor;
-    
+    private ThreadPoolExecutor executor;
+    private MBeanServer mBeanServer;
+    private ObjectName jmxName;
+
     @Inject
     public ConfigurableExecutorService(
+        @Named(ExecutorConfig.NAME) String name,
         @Named(ExecutorConfig.MIN_POOL_SIZE) int minPoolSize,
         @Named(ExecutorConfig.MAX_POOL_SIZE) int maxPoolSize,
         @Named(ExecutorConfig.KEEP_ALIVE_TIME) long keepAliveTime,
@@ -82,7 +89,8 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         ThreadFactory defaultFactory,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit) {
-        
+
+        this.name = name;
         this.minPoolSize = minPoolSize;
         this.maxPoolSize = maxPoolSize == -1 ? Integer.MAX_VALUE : maxPoolSize;
         this.keepAliveTime = keepAliveTime;
@@ -103,6 +111,11 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     void setHandler(@Named(ExecutorConfig.REJECTION_HANDLER) RejectedExecutionHandler handler) {
         this.handler = Preconditions.checkNotNull(handler, "Handler");
     }
+
+    @Inject(optional = true)
+    void setMBeanServer(MBeanServer mBeanServer) {
+        this.mBeanServer = mBeanServer;
+    }
     
     @Override
     public void initialize() throws LifecycleException {
@@ -112,6 +125,15 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
             queueCapacity == -1 ? queueMode.create() : queueMode.create(queueCapacity),
             factory, handler
         );
+
+        if (mBeanServer != null) {
+            try {
+                jmxName = new ObjectName("de.cosmocode.palava.concurrent:type=ConfigurableExecutorServiceMBean", "name", name);
+                mBeanServer.registerMBean(this, jmxName);
+            } catch (JMException e) {
+                throw new LifecycleException(e);
+            }
+        }
     }
     
     @Override
@@ -183,6 +205,13 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     
     @Override
     public void dispose() throws LifecycleException {
+        if (mBeanServer != null) {
+            try {
+                mBeanServer.unregisterMBean(jmxName);
+            } catch (JMException e) {
+                LOG.error("Cannot unregister from JMX server", e);
+            }
+        }
         try {
             LOG.info("Shutting down ExecutorService");
             executor.shutdown();
@@ -212,5 +241,45 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
             queueMode, 
             shutdownTimeout, shutdownTimeoutUnit);
     }
-    
+
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public int getActiveCount() {
+        return executor.getActiveCount();
+    }
+
+    @Override
+    public long getCompletedTaskCount() {
+        return executor.getCompletedTaskCount();
+    }
+
+    @Override
+    public int getCorePoolSize() {
+        return executor.getCorePoolSize();
+    }
+
+    @Override
+    public int getLargestPoolSize() {
+        return executor.getLargestPoolSize();
+    }
+
+    @Override
+    public int getMaximumPoolSize() {
+        return executor.getMaximumPoolSize();
+    }
+
+    @Override
+    public int getPoolSize() {
+        return executor.getPoolSize();
+    }
+
+    @Override
+    public long getTaskCount() {
+        return executor.getTaskCount();
+    }
 }
