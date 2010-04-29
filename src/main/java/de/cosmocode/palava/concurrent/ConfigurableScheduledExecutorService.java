@@ -30,6 +30,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,12 +49,18 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
 /**
  * A {@link ScheduledExecutorService} which can be configured easily configured
  * using the constructor.
- *
+ * 
  * @author Willi Schoenborn
  */
-final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Initializable, Disposable {
+final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Initializable, Disposable,
+    ConfigurableScheduledExecutorServiceMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableScheduledExecutorService.class);
+
+    private static final String DOMAIN = 
+        "de.cosmocode.palava.concurrent:type=ConfigurableScheduledExecutorServiceMBean";  
+    
+    private final String name;
     
     private final int minPoolSize;
     
@@ -61,19 +72,34 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
     
     private final TimeUnit shutdownTimeoutUnit;
 
-    private ScheduledExecutorService executor;
+    private MBeanServer beanServer;
+    
+    private final ObjectName objectName;
+    
+    private ScheduledThreadPoolExecutor executor;
     
     @Inject
     public ConfigurableScheduledExecutorService(
+        @Named(ExecutorConfig.NAME) String name,
         @Named(ExecutorConfig.MIN_POOL_SIZE) int minPoolSize,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
         ThreadFactory defaultFactory) {
         
+        this.name = Preconditions.checkNotNull(name, "Name");
+        this.objectName = createObjectName(name);
         this.minPoolSize = minPoolSize;
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
         this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
+    }
+    
+    private ObjectName createObjectName(String prefix) {
+        try {
+            return new ObjectName(DOMAIN, "name", prefix);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
     
     @Inject(optional = true)
@@ -86,9 +112,27 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
         this.handler = Preconditions.checkNotNull(handler, "Handler");
     }
     
+    @Inject(optional = true)
+    void setBeanServer(MBeanServer beanServer) {
+        this.beanServer = beanServer;
+    }
+    
     @Override
     public void initialize() throws LifecycleException {
-        this.executor = new ScheduledThreadPoolExecutor(minPoolSize, factory, handler);
+        this.executor = new ScheduledThreadPoolExecutor(
+            minPoolSize, factory, handler
+        );
+
+        if (beanServer == null) {
+            LOG.info("Configuring {} without jmx support", this);
+        } else {
+            LOG.info("Enabling jmx support for {} using {}", this, objectName);
+            try {
+                beanServer.registerMBean(this, objectName);
+            } catch (JMException e) {
+                throw new LifecycleException(e);
+            }
+        }
     }
     
     @Override
@@ -179,18 +223,69 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public int getActiveCount() {
+        return executor.getActiveCount();
+    }
+
+    @Override
+    public long getCompletedTaskCount() {
+        return executor.getCompletedTaskCount();
+    }
+
+    @Override
+    public int getCorePoolSize() {
+        return executor.getCorePoolSize();
+    }
+
+    @Override
+    public int getLargestPoolSize() {
+        return executor.getLargestPoolSize();
+    }
+
+    @Override
+    public int getMaximumPoolSize() {
+        return executor.getMaximumPoolSize();
+    }
+
+    @Override
+    public int getPoolSize() {
+        return executor.getPoolSize();
+    }
+
+    @Override
+    public long getTaskCount() {
+        return executor.getTaskCount();
+    }
+
+    @Override
     public void dispose() throws LifecycleException {
+        if (beanServer == null) {
+            LOG.info("No jmx support, no need to unregister");
+        } else {
+            LOG.info("Unregistering {} from {}", this, beanServer);
+            try {
+                beanServer.unregisterMBean(objectName);
+            } catch (JMException e) {
+                LOG.error("Cannot unregister from JMX server", e);
+            }
+        }
+        
         try {
-            LOG.info("Shutting down ExecutorService");
+            LOG.info("Shutting down {}", this);
             executor.shutdown();
-            LOG.info("Waiting {} {} for ExecutorService to shut down", 
-                shutdownTimeout, shutdownTimeoutUnit.name().toLowerCase()
-            );
+            LOG.info("Waiting {} {} for {} to shut down", new Object[] {
+                shutdownTimeout, shutdownTimeoutUnit.name().toLowerCase(), this
+            });
             final boolean terminated = executor.awaitTermination(shutdownTimeout, shutdownTimeoutUnit);
             if (terminated) {
-                LOG.info("ExecutorService terminated successfully");
+                LOG.info("{} terminated successfully", this);
             } else {
-                LOG.warn("ExecutorService was forced to shutdown before finish");
+                LOG.warn("{} was forced to shutdown before finish", this);
             }
         } catch (InterruptedException e) {
             LOG.error("Interrupted while awaiting termination", e);
@@ -199,9 +294,7 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
 
     @Override
     public String toString() {
-        return String.format(
-            "ConfigurableScheduledExecutorService [minPoolSize=%s, shutdownTimeout=%s, shutdownTimeoutUnit=%s]",
-            minPoolSize, shutdownTimeout, shutdownTimeoutUnit);
+        return String.format("ScheduledExecutorService [%s]", name);
     }
     
 }

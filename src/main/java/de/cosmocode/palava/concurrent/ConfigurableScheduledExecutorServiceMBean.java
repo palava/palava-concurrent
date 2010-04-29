@@ -18,10 +18,10 @@ package de.cosmocode.palava.concurrent;
 
 /**
  * MBean interface for {@link ConfigurableScheduledExecutorService}.
- * 
+ *
  * @author Willi Schoenborn
  */
-public interface ConfigurableExecutorServiceMBean {
+public interface ConfigurableScheduledExecutorServiceMBean {
     
     /**
      * Returns the name of this scheduler.

@@ -77,6 +77,8 @@ public final class SchedulerModule extends AbstractRebindingModule {
     protected void configuration() {
         LOG.trace("Binding scheduler configuration for {} using name {}", key, name);
         
+        bind(String.class).annotatedWith(Names.named(ExecutorConfig.NAME)).toInstance(name);
+        
         bind(int.class).annotatedWith(Names.named(ExecutorConfig.MIN_POOL_SIZE)).to(
             Key.get(int.class, Names.named(config.minPoolSize())));
         

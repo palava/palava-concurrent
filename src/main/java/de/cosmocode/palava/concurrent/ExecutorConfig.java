@@ -51,12 +51,10 @@ public final class ExecutorConfig {
     
     private static final String PREFIX = "executors.named.";
 
-    private final String name;
     private final String prefix;
 
     private ExecutorConfig(String name) {
         Preconditions.checkNotNull(name, "Name");
-        this.name = name;
         this.prefix = PREFIX + name + ".";
 
     }
@@ -72,15 +70,6 @@ public final class ExecutorConfig {
     public static ExecutorConfig named(String name) {
         Preconditions.checkNotNull(name, "Name");
         return new ExecutorConfig(name);
-    }
-
-    /**
-     * Returns the executor's name.
-     *
-     * @return the executor's name
-     */
-    public String name() {
-        return name;
     }
 
     /**

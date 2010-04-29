@@ -28,6 +28,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,18 +44,19 @@ import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
-import javax.management.*;
-
 /**
  * An {@link ExecutorService} which can be easily configured using
  * the constructor.
  *
  * @author Willi Schoenborn
  */
-final class ConfigurableExecutorService implements ExecutorService, Initializable, Disposable, ConfigurableExecutorServiceMBean {
+final class ConfigurableExecutorService implements ExecutorService, Initializable, Disposable, 
+    ConfigurableExecutorServiceMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableExecutorService.class);
 
+    private static final String DOMAIN = "de.cosmocode.palava.concurrent:type=ConfigurableExecutorServiceMBean";  
+    
     private String name;
 
     private final int minPoolSize;
@@ -74,8 +80,10 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     private final TimeUnit shutdownTimeoutUnit;
     
     private ThreadPoolExecutor executor;
-    private MBeanServer mBeanServer;
-    private ObjectName jmxName;
+    
+    private MBeanServer beanServer;
+    
+    private final ObjectName objectName;
 
     @Inject
     public ConfigurableExecutorService(
@@ -90,7 +98,8 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit) {
 
-        this.name = name;
+        this.name = Preconditions.checkNotNull(name, "Name");
+        this.objectName = createObjectName(name);
         this.minPoolSize = minPoolSize;
         this.maxPoolSize = maxPoolSize == -1 ? Integer.MAX_VALUE : maxPoolSize;
         this.keepAliveTime = keepAliveTime;
@@ -100,6 +109,14 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
+    }
+    
+    private ObjectName createObjectName(String prefix) {
+        try {
+            return new ObjectName(DOMAIN, "name", prefix);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
     
     @Inject(optional = true)
@@ -113,8 +130,8 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     }
 
     @Inject(optional = true)
-    void setMBeanServer(MBeanServer mBeanServer) {
-        this.mBeanServer = mBeanServer;
+    void setBeanServer(MBeanServer beanServer) {
+        this.beanServer = beanServer;
     }
     
     @Override
@@ -126,10 +143,12 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
             factory, handler
         );
 
-        if (mBeanServer != null) {
+        if (beanServer == null) {
+            LOG.info("Configuring {} without jmx support", this);
+        } else {
+            LOG.info("Enabling jmx support for {} using {}", this, objectName);
             try {
-                jmxName = new ObjectName("de.cosmocode.palava.concurrent:type=ConfigurableExecutorServiceMBean", "name", name);
-                mBeanServer.registerMBean(this, jmxName);
+                beanServer.registerMBean(this, objectName);
             } catch (JMException e) {
                 throw new LifecycleException(e);
             }
@@ -202,46 +221,6 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     public Future<?> submit(Runnable task) {
         return executor.submit(task);
     }
-    
-    @Override
-    public void dispose() throws LifecycleException {
-        if (mBeanServer != null) {
-            try {
-                mBeanServer.unregisterMBean(jmxName);
-            } catch (JMException e) {
-                LOG.error("Cannot unregister from JMX server", e);
-            }
-        }
-        try {
-            LOG.info("Shutting down ExecutorService");
-            executor.shutdown();
-            LOG.info("Waiting {} {} for ExecutorService to shut down", 
-                shutdownTimeout, shutdownTimeoutUnit.name().toLowerCase()
-            );
-            final boolean terminated = executor.awaitTermination(shutdownTimeout, shutdownTimeoutUnit);
-            if (terminated) {
-                LOG.info("ExecutorService terminated successfully");
-            } else {
-                LOG.warn("ExecutorService was forced to shutdown before finish");
-            }
-        } catch (InterruptedException e) {
-            LOG.error("Interrupted while awaiting termination", e);
-        }
-    }
-
-    @Override
-    public String toString() {
-        return String.format("ConfigurableExecutorService [" +
-            "minPoolSize=%s, maxPoolSize=%s, " +
-            "keepAliveTime=%s, keepAliveTimeUnit=%s, " +
-            "queueMode=%s, " +
-            "shutdownTimeout=%s, shutdownTimeoutUnit=%s]",
-            minPoolSize, maxPoolSize, 
-            keepAliveTime, keepAliveTimeUnit, 
-            queueMode, 
-            shutdownTimeout, shutdownTimeoutUnit);
-    }
-
 
     @Override
     public String getName() {
@@ -282,4 +261,40 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     public long getTaskCount() {
         return executor.getTaskCount();
     }
+    
+    @Override
+    public void dispose() throws LifecycleException {
+        if (beanServer == null) {
+            LOG.info("No jmx support, no need to unregister");
+        } else {
+            LOG.info("Unregistering {} from {}", this, beanServer);
+            try {
+                beanServer.unregisterMBean(objectName);
+            } catch (JMException e) {
+                LOG.error("Cannot unregister from JMX server", e);
+            }
+        }
+        
+        try {
+            LOG.info("Shutting down {}", this);
+            executor.shutdown();
+            LOG.info("Waiting {} {} for {} to shut down", new Object[] { 
+                shutdownTimeout, shutdownTimeoutUnit.name().toLowerCase(), this
+            });
+            final boolean terminated = executor.awaitTermination(shutdownTimeout, shutdownTimeoutUnit);
+            if (terminated) {
+                LOG.info("{} terminated successfully", this);
+            } else {
+                LOG.warn("{} was forced to shutdown before finish", this);
+            }
+        } catch (InterruptedException e) {
+            LOG.error("Interrupted while awaiting termination", e);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("ExecutorService [%s]", name);
+    }
+    
 }
