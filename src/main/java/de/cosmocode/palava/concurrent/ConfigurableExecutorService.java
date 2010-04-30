@@ -33,6 +33,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import de.cosmocode.palava.jmx.MBeanRegistered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,12 +51,10 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  *
  * @author Willi Schoenborn
  */
-final class ConfigurableExecutorService implements ExecutorService, Initializable, Disposable, 
-    ConfigurableExecutorServiceMBean {
+final class ConfigurableExecutorService extends MBeanRegistered implements ExecutorService, Initializable,
+        Disposable, ConfigurableExecutorServiceMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableExecutorService.class);
-
-    private static final String DOMAIN = "de.cosmocode.palava.concurrent:type=ConfigurableExecutorServiceMBean";  
     
     private String name;
 
@@ -80,10 +79,6 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     private final TimeUnit shutdownTimeoutUnit;
     
     private ThreadPoolExecutor executor;
-    
-    private MBeanServer beanServer;
-    
-    private final ObjectName objectName;
 
     @Inject
     public ConfigurableExecutorService(
@@ -97,9 +92,9 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         ThreadFactory defaultFactory,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit) {
+        super(ConfigurableExecutorService.class, "name", Preconditions.checkNotNull(name, "Name"));
 
-        this.name = Preconditions.checkNotNull(name, "Name");
-        this.objectName = createObjectName(name);
+        this.name = name;
         this.minPoolSize = minPoolSize;
         this.maxPoolSize = maxPoolSize == -1 ? Integer.MAX_VALUE : maxPoolSize;
         this.keepAliveTime = keepAliveTime;
@@ -111,14 +106,6 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
     }
     
-    private ObjectName createObjectName(String prefix) {
-        try {
-            return new ObjectName(DOMAIN, "name", prefix);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-    
     @Inject(optional = true)
     void setFactory(@Named(ExecutorConfig.THREAD_FACTORY) ThreadFactory factory) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
@@ -127,11 +114,6 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     @Inject(optional = true)
     void setHandler(@Named(ExecutorConfig.REJECTION_HANDLER) RejectedExecutionHandler handler) {
         this.handler = Preconditions.checkNotNull(handler, "Handler");
-    }
-
-    @Inject(optional = true)
-    void setBeanServer(MBeanServer beanServer) {
-        this.beanServer = beanServer;
     }
     
     @Override
@@ -143,16 +125,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
             factory, handler
         );
 
-        if (beanServer == null) {
-            LOG.info("Configuring {} without jmx support", this);
-        } else {
-            LOG.info("Enabling jmx support for {} using {}", this, objectName);
-            try {
-                beanServer.registerMBean(this, objectName);
-            } catch (JMException e) {
-                throw new LifecycleException(e);
-            }
-        }
+        super.initialize();
     }
     
     @Override
@@ -264,16 +237,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     
     @Override
     public void dispose() throws LifecycleException {
-        if (beanServer == null) {
-            LOG.info("No jmx support, no need to unregister");
-        } else {
-            LOG.info("Unregistering {} from {}", this, beanServer);
-            try {
-                beanServer.unregisterMBean(objectName);
-            } catch (JMException e) {
-                LOG.error("Cannot unregister from JMX server", e);
-            }
-        }
+        super.dispose();
         
         try {
             LOG.info("Shutting down {}", this);

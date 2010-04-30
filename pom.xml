@@ -23,6 +23,11 @@
             <version>[2.4-SNAPSHOT,3)</version>
         </dependency>
         <dependency>
+            <groupId>de.cosmocode.palava</groupId>
+            <artifactId>palava-jmx</artifactId>
+            <version>[1.2-SNAPSHOT,2)</version>
+        </dependency>
+        <dependency>
             <groupId>de.cosmocode</groupId>
             <artifactId>cosmocode-junit</artifactId>
             <scope>test</scope>

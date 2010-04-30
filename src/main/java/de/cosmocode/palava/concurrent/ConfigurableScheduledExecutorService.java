@@ -35,6 +35,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import de.cosmocode.palava.jmx.MBeanRegistered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,13 +53,10 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  * 
  * @author Willi Schoenborn
  */
-final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Initializable, Disposable,
-    ConfigurableScheduledExecutorServiceMBean {
+final class ConfigurableScheduledExecutorService extends MBeanRegistered implements ScheduledExecutorService,
+        Initializable, Disposable, ConfigurableScheduledExecutorServiceMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableScheduledExecutorService.class);
-
-    private static final String DOMAIN = 
-        "de.cosmocode.palava.concurrent:type=ConfigurableScheduledExecutorServiceMBean";  
     
     private final String name;
     
@@ -71,10 +69,6 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
     private final long shutdownTimeout;
     
     private final TimeUnit shutdownTimeoutUnit;
-
-    private MBeanServer beanServer;
-    
-    private final ObjectName objectName;
     
     private ScheduledThreadPoolExecutor executor;
     
@@ -85,21 +79,13 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
         ThreadFactory defaultFactory) {
+        super(ConfigurableScheduledExecutorService.class, "name", Preconditions.checkNotNull(name, "Name"));
         
-        this.name = Preconditions.checkNotNull(name, "Name");
-        this.objectName = createObjectName(name);
+        this.name = name;
         this.minPoolSize = minPoolSize;
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
         this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
-    }
-    
-    private ObjectName createObjectName(String prefix) {
-        try {
-            return new ObjectName(DOMAIN, "name", prefix);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalArgumentException(e);
-        }
     }
     
     @Inject(optional = true)
@@ -112,27 +98,13 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
         this.handler = Preconditions.checkNotNull(handler, "Handler");
     }
     
-    @Inject(optional = true)
-    void setBeanServer(MBeanServer beanServer) {
-        this.beanServer = beanServer;
-    }
-    
     @Override
     public void initialize() throws LifecycleException {
         this.executor = new ScheduledThreadPoolExecutor(
             minPoolSize, factory, handler
         );
 
-        if (beanServer == null) {
-            LOG.info("Configuring {} without jmx support", this);
-        } else {
-            LOG.info("Enabling jmx support for {} using {}", this, objectName);
-            try {
-                beanServer.registerMBean(this, objectName);
-            } catch (JMException e) {
-                throw new LifecycleException(e);
-            }
-        }
+        super.initialize();
     }
     
     @Override
@@ -264,16 +236,7 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
 
     @Override
     public void dispose() throws LifecycleException {
-        if (beanServer == null) {
-            LOG.info("No jmx support, no need to unregister");
-        } else {
-            LOG.info("Unregistering {} from {}", this, beanServer);
-            try {
-                beanServer.unregisterMBean(objectName);
-            } catch (JMException e) {
-                LOG.error("Cannot unregister from JMX server", e);
-            }
-        }
+        super.dispose();
         
         try {
             LOG.info("Shutting down {}", this);
