@@ -30,12 +30,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import de.cosmocode.palava.jmx.MBeanRegistered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +40,7 @@ import com.google.inject.name.Named;
 import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
+import de.cosmocode.palava.jmx.MBeanService;
 
 /**
  * A {@link ScheduledExecutorService} which can be configured easily configured
@@ -53,8 +48,8 @@ import de.cosmocode.palava.core.lifecycle.LifecycleException;
  * 
  * @author Willi Schoenborn
  */
-final class ConfigurableScheduledExecutorService extends MBeanRegistered implements ScheduledExecutorService,
-        Initializable, Disposable, ConfigurableScheduledExecutorServiceMBean {
+final class ConfigurableScheduledExecutorService implements ScheduledExecutorService, Initializable, Disposable, 
+    ConfigurableScheduledExecutorServiceMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurableScheduledExecutorService.class);
     
@@ -72,20 +67,23 @@ final class ConfigurableScheduledExecutorService extends MBeanRegistered impleme
     
     private ScheduledThreadPoolExecutor executor;
     
+    private final MBeanService beanService;
+    
     @Inject
     public ConfigurableScheduledExecutorService(
         @Named(ExecutorConfig.NAME) String name,
         @Named(ExecutorConfig.MIN_POOL_SIZE) int minPoolSize,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
-        ThreadFactory defaultFactory) {
-        super(ConfigurableScheduledExecutorService.class, "name", Preconditions.checkNotNull(name, "Name"));
+        ThreadFactory defaultFactory,
+        MBeanService beanService) {
         
         this.name = name;
         this.minPoolSize = minPoolSize;
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
         this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
+        this.beanService = Preconditions.checkNotNull(beanService, "BeanService");
     }
     
     @Inject(optional = true)
@@ -104,7 +102,7 @@ final class ConfigurableScheduledExecutorService extends MBeanRegistered impleme
             minPoolSize, factory, handler
         );
 
-        super.initialize();
+        beanService.register(this);
     }
     
     @Override
@@ -236,7 +234,7 @@ final class ConfigurableScheduledExecutorService extends MBeanRegistered impleme
 
     @Override
     public void dispose() throws LifecycleException {
-        super.dispose();
+        beanService.unregister(this);
         
         try {
             LOG.info("Shutting down {}", this);
