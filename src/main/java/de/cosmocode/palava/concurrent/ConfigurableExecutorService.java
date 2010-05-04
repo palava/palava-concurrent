@@ -123,7 +123,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
             factory, handler
         );
         
-        beanService.register(this);
+        beanService.register(this, "name", name);
     }
     
     @Override
@@ -235,7 +235,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     
     @Override
     public void dispose() throws LifecycleException {
-        beanService.unregister(this);
+        beanService.unregister(this, "name", name);
         
         try {
             LOG.info("Shutting down {}", this);

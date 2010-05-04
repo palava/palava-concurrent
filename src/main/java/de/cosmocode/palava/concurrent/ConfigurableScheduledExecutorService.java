@@ -102,7 +102,7 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
             minPoolSize, factory, handler
         );
 
-        beanService.register(this);
+        beanService.register(this, "name", name);
     }
     
     @Override
@@ -234,7 +234,7 @@ final class ConfigurableScheduledExecutorService implements ScheduledExecutorSer
 
     @Override
     public void dispose() throws LifecycleException {
-        beanService.unregister(this);
+        beanService.unregister(this, "name", name);
         
         try {
             LOG.info("Shutting down {}", this);
