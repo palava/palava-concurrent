@@ -75,7 +75,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     
     private ThreadPoolExecutor executor;
 
-    private final MBeanService beanService;
+    private final MBeanService mBeanService;
     
     @Inject
     public ConfigurableExecutorService(
@@ -89,7 +89,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         ThreadFactory defaultFactory,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT) long shutdownTimeout,
         @Named(ExecutorConfig.SHUTDOWN_TIMEOUT_UNIT) TimeUnit shutdownTimeoutUnit,
-        MBeanService beanService) {
+        MBeanService mBeanService) {
 
         this.name = name;
         this.minPoolSize = minPoolSize;
@@ -101,7 +101,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
         this.factory = Preconditions.checkNotNull(defaultFactory, "Factory");
         this.shutdownTimeout = shutdownTimeout;
         this.shutdownTimeoutUnit = Preconditions.checkNotNull(shutdownTimeoutUnit, "ShutdownTimeoutUnit");
-        this.beanService = Preconditions.checkNotNull(beanService, "BeanService");
+        this.mBeanService = Preconditions.checkNotNull(mBeanService, "MBeanService");
     }
     
     @Inject(optional = true)
@@ -123,7 +123,7 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
             factory, handler
         );
         
-        beanService.register(this, "name", name);
+        mBeanService.register(this, "name", name);
     }
     
     @Override
@@ -235,22 +235,24 @@ final class ConfigurableExecutorService implements ExecutorService, Initializabl
     
     @Override
     public void dispose() throws LifecycleException {
-        beanService.unregister(this, "name", name);
-        
         try {
-            LOG.info("Shutting down {}", this);
-            executor.shutdown();
-            LOG.info("Waiting {} {} for {} to shut down", new Object[] { 
-                shutdownTimeout, shutdownTimeoutUnit.name().toLowerCase(), this
-            });
-            final boolean terminated = executor.awaitTermination(shutdownTimeout, shutdownTimeoutUnit);
-            if (terminated) {
-                LOG.info("{} terminated successfully", this);
-            } else {
-                LOG.warn("{} was forced to shutdown before finish", this);
+            mBeanService.unregister(this, "name", name);
+        } finally {
+            try {
+                LOG.info("Shutting down {}", this);
+                executor.shutdown();
+                LOG.info("Waiting {} {} for {} to shut down", new Object[] { 
+                    shutdownTimeout, shutdownTimeoutUnit.name().toLowerCase(), this
+                });
+                final boolean terminated = executor.awaitTermination(shutdownTimeout, shutdownTimeoutUnit);
+                if (terminated) {
+                    LOG.info("{} terminated successfully", this);
+                } else {
+                    LOG.warn("{} was forced to shutdown before finish", this);
+                }
+            } catch (InterruptedException e) {
+                LOG.error("Interrupted while awaiting termination", e);
             }
-        } catch (InterruptedException e) {
-            LOG.error("Interrupted while awaiting termination", e);
         }
     }
 
