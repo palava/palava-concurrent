@@ -30,7 +30,7 @@ import com.google.inject.Key;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
-import de.cosmocode.palava.core.inject.AbstractRebindingModule;
+import de.cosmocode.palava.core.inject.AbstractRebindModule;
 
 /**
  * This module can be used to rebind general scheduler
@@ -38,7 +38,7 @@ import de.cosmocode.palava.core.inject.AbstractRebindingModule;
  *
  * @author Willi Schoenborn
  */
-public final class SchedulerModule extends AbstractRebindingModule {
+public final class SchedulerModule extends AbstractRebindModule {
 
     private static final Logger LOG = LoggerFactory.getLogger(SchedulerModule.class);
 

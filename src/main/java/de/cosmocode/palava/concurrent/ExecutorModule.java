@@ -30,7 +30,7 @@ import com.google.inject.Key;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
-import de.cosmocode.palava.core.inject.AbstractRebindingModule;
+import de.cosmocode.palava.core.inject.AbstractRebindModule;
 
 /**
  * This module can be used to rebind general executor service
@@ -38,7 +38,7 @@ import de.cosmocode.palava.core.inject.AbstractRebindingModule;
  *
  * @author Willi Schoenborn
  */
-public class ExecutorModule extends AbstractRebindingModule {
+public class ExecutorModule extends AbstractRebindModule {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorModule.class);
 
