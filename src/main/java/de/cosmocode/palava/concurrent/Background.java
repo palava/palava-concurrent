@@ -20,24 +20,25 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.inject.BindingAnnotation;
 
 /**
- * Binding annotation for background {@link ScheduledExecutorService}.
+ * Binding annotation for a background {@link Executor},
+ * {@link ExecutorService} and {@link ScheduledExecutorService}.
  *
- * @deprecated use {@link Background}
  * @author Willi Schoenborn
  */
-@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target({
     ElementType.PARAMETER,
     ElementType.METHOD
 })
 @BindingAnnotation
-public @interface BackgroundScheduler {
+public @interface Background {
 
     String NAME = "background";
     

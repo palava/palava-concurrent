@@ -16,8 +16,14 @@
 
 package de.cosmocode.palava.concurrent;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Singleton;
 
 /**
  * Installs the {@link BackgroundScheduler}.
@@ -27,8 +33,15 @@ import com.google.inject.Module;
 public class BackgroundSchedulerModule implements Module {
 
     @Override
+    @SuppressWarnings("deprecation")
     public void configure(Binder binder) {
         binder.install(new SchedulerModule(BackgroundScheduler.class, BackgroundScheduler.NAME));
+        
+        final Key<ScheduledExecutorService> key = Key.get(ScheduledExecutorService.class, BackgroundScheduler.class);
+        
+        binder.bind(Executor.class).annotatedWith(Background.class).to(key).in(Singleton.class);
+        binder.bind(ExecutorService.class).annotatedWith(Background.class).to(key).in(Singleton.class);
+        binder.bind(ScheduledExecutorService.class).annotatedWith(Background.class).to(key).in(Singleton.class);
     }
 
 }
