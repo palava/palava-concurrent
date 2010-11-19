@@ -24,13 +24,11 @@ import de.cosmocode.palava.core.Registry;
 
 /**
  * A {@link Registry} which provides asynchronous
- * notify* methods.
+ * notify methods.
  *
- * @deprecated use {@link AsyncRegistry}
  * @author Willi Schoenborn
  */
-@Deprecated
-public interface ConcurrentRegistry extends Registry {
+public interface AsyncRegistry extends Registry {
 
     /**
      * Notify all listeners for a specific type

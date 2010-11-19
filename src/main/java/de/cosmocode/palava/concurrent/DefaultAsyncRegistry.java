@@ -29,22 +29,20 @@ import de.cosmocode.palava.core.ForwardingRegistry;
 import de.cosmocode.palava.core.Registry;
 
 /**
- * Default implementation of the {@link ConcurrentRegistry} interface.
+ * Default implementation of the {@link AsyncRegistry} interface.
  *
- * @deprecated use {@link DefaultAsyncRegistry}
  * @author Willi Schoenborn
  */
-@Deprecated
-final class DefaultConcurrentRegistry extends ForwardingRegistry implements ConcurrentRegistry {
+final class DefaultAsyncRegistry extends ForwardingRegistry implements AsyncRegistry {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultConcurrentRegistry.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultAsyncRegistry.class);
     
     private final Registry registry;
     
     private final ExecutorService executor;
     
     @Inject
-    public DefaultConcurrentRegistry(Registry registry, @BackgroundNotifier ExecutorService executor) {
+    public DefaultAsyncRegistry(Registry registry, @BackgroundNotifier ExecutorService executor) {
         this.registry = Preconditions.checkNotNull(registry, "Registry");
         this.executor = Preconditions.checkNotNull(executor, "Executor");
     }

@@ -21,17 +21,15 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 
 /**
- * Binds {@link ConcurrentRegistry} to {@link DefaultConcurrentRegistry}.
+ * Binds {@link AsyncRegistry} to {@link DefaultAsyncRegistry}.
  *
- * @deprecated use {@link DefaultAsyncRegistryModule}
  * @author Willi Schoenborn
  */
-@Deprecated
-public final class DefaultConcurrentRegistryModule implements Module {
+public final class DefaultAsyncRegistryModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.bind(ConcurrentRegistry.class).to(DefaultConcurrentRegistry.class).in(Singleton.class);
+        binder.bind(AsyncRegistry.class).to(DefaultAsyncRegistry.class).in(Singleton.class);
     }
 
 }
